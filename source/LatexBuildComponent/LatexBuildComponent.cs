@@ -30,7 +30,7 @@ namespace LatexBuildComponent
     /// </example>
     public class LatexBuildComponent : BuildComponent
     {
-        private const string _path = "Output\\html\\";
+        private const string _path = @"Output\HtmlHelp1\html\";
         private uint _count = 1;
 
         /// <summary>
@@ -58,10 +58,10 @@ namespace LatexBuildComponent
             {
                 foreach (XmlNode code in latexList)
                 {
-                    string filename = "eq_" + _count++ + ".gif";
+                    var filename = "eq_" + _count++ + ".gif";
                     SafeNativeMethods.CreateGifFromEq(code.InnerText, _path + filename);
                     XmlNode img = document.CreateElement("img");
-                    XmlAttribute src = document.CreateAttribute("src");
+                    var src = document.CreateAttribute("src");
                     src.Value = filename;
                     img.Attributes.Append(src);
                     code.ParentNode.ReplaceChild(img, code);

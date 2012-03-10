@@ -27,13 +27,21 @@
     <WorkingPath />
     <CleanIntermediates>False</CleanIntermediates>
     <BuildLogFile />
-    <FrameworkVersion>.NET 2.0.50727</FrameworkVersion>
+    <FrameworkVersion>.NET 4.0.30319</FrameworkVersion>
     <PresentationStyle>Prototype</PresentationStyle>
     <ComponentConfigurations>
+      <ComponentConfig id="LaTeX Buld Component" enabled="True">
+        <component id="LaTeX Buld Component" type="LatexBuildComponent.LatexBuildComponent" assembly="{@ComponentsFolder}\LatexBuildComponent.dll">
+<!-- Base path for relative filenames in source attributes (optional) -->
+<basePath value="{@ProjectFolder}" />
+<!-- Connect to language filter (optional).  If omitted, language filtering is enabled by default. -->
+<languageFilter value="true" />
+</component>
+      </ComponentConfig>
     </ComponentConfigurations>
     <DocumentationSources>
-      <DocumentationSource sourceFile="bin\x64\Release\TestProject.dll" />
-<DocumentationSource sourceFile="bin\x64\Release\TestProject.xml" /></DocumentationSources>
+      <DocumentationSource sourceFile="bin\Release\TestProject.dll" />
+<DocumentationSource sourceFile="bin\Release\TestProject.xml" /></DocumentationSources>
   </PropertyGroup>
   <!-- There are no properties for these groups.  AnyCPU needs to appear in
        order for Visual Studio to perform the build.  The others are optional

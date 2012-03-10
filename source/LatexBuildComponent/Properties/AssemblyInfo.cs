@@ -5,13 +5,13 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Latex Build Component")]
-[assembly: AssemblyDescription("A Latex Build Component for the SandCastle Help File Builder.")]
+[assembly: AssemblyTitle("LaTeX Build Component")]
+[assembly: AssemblyDescription("A LaTeX Build Component for the SandCastle Help File Builder.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Marcus Cuda")]
-[assembly: AssemblyProduct("Latex Build Component")]
+[assembly: AssemblyProduct("LaTeX Build Component")]
 [assembly: AssemblyCopyright("Copyright © Marcus Cuda 2008-2009")]
-[assembly: AssemblyTrademark("http://cuda.net")]
+[assembly: AssemblyTrademark("http://marcuscuda.com")]
 [assembly: AssemblyCulture("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
@@ -32,5 +32,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyVersion("0.1.0.0")]
+[assembly: AssemblyFileVersion("0.1.0.0")]
