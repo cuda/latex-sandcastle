@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioProject
+	ProjectType="Intel C++ Project"
+	Version="11.0"
+	Name="mimetex"
+	ProjectGUID="{3FC996D8-7708-4149-8C75-10C5B144DE63}"
+	VCNestedProjectGUID="{3712E77E-1176-4F47-8B32-C731FAAE8646}"
+	VCNestedProjectFileName="mimetex.vcproj">
+	<Configurations>
+		<Configuration
+			Name="Release|Win32">
+			<Tool
+				Name="CppCmplrTool"
+				UseProcessorExtensions="1"/>
+		</Configuration>
+		<Configuration
+			Name="Release|x64">
+			<Tool
+				Name="CppCmplrTool"
+				UseProcessorExtensions="2"/>
+		</Configuration>
+	</Configurations>
+	<Files/>
+</VisualStudioProject>

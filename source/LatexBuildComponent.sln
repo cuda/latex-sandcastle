@@ -1,0 +1,33 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LatexBuildComponent", "LatexBuildComponent\LatexBuildComponent.csproj", "{88962EE1-C58F-4A69-A9CD-A8313B238F92}"
+	ProjectSection(ProjectDependencies) = postProject
+		{3712E77E-1176-4F47-8B32-C731FAAE8646} = {3712E77E-1176-4F47-8B32-C731FAAE8646}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mimetex", "mimetex\mimetex.vcxproj", "{3712E77E-1176-4F47-8B32-C731FAAE8646}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject", "TestProject\TestProject.csproj", "{825754D3-CDA1-4E2C-82DD-ED591D9BE186}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{88962EE1-C58F-4A69-A9CD-A8313B238F92}.Release|x64.ActiveCfg = Release|x64
+		{88962EE1-C58F-4A69-A9CD-A8313B238F92}.Release|x64.Build.0 = Release|x64
+		{88962EE1-C58F-4A69-A9CD-A8313B238F92}.Release|x86.ActiveCfg = Release|x86
+		{88962EE1-C58F-4A69-A9CD-A8313B238F92}.Release|x86.Build.0 = Release|x86
+		{3712E77E-1176-4F47-8B32-C731FAAE8646}.Release|x64.ActiveCfg = Release|x64
+		{3712E77E-1176-4F47-8B32-C731FAAE8646}.Release|x64.Build.0 = Release|x64
+		{3712E77E-1176-4F47-8B32-C731FAAE8646}.Release|x86.ActiveCfg = Release|Win32
+		{825754D3-CDA1-4E2C-82DD-ED591D9BE186}.Release|x64.ActiveCfg = Release|x64
+		{825754D3-CDA1-4E2C-82DD-ED591D9BE186}.Release|x64.Build.0 = Release|x64
+		{825754D3-CDA1-4E2C-82DD-ED591D9BE186}.Release|x86.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
