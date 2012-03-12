@@ -5,7 +5,7 @@ Requirements:
 
 Instructions
 From the zip file:
-1. Download the zip file from http://github.com/cuda/latex-sandcastle/downloads)that matches your CPU architecture.
+1. Download the zip file from http://github.com/cuda/latex-sandcastle/downloads) that matches your CPU architecture.
 2. Place the files from the zip file into the Sandcastle Help File Builder (SHFB) Components and Plug-Ins directory.
    This directory differs depending on your OS.
    Vista: %ProgramData%\EWSoftware\Sandcastle Help File Builder\Components and Plug-Ins
