@@ -77,7 +77,7 @@
       <Link>lbc.snk</Link>
     </None>
     <None Include="LatexBuildComponent.components">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
   <ItemGroup>

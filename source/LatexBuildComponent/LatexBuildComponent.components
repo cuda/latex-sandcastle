@@ -2,17 +2,16 @@
 <components>
   <component id="LaTeX Buld Component"  type="LatexBuildComponent.LatexBuildComponent"  assembly="{@ComponentsFolder}\LatexBuildComponent.dll">
     <description>Converts LaTeX code into images.</description>
-      <dependencies>
-        <component id="Post-transform Component" />
-      </dependencies>
-      <insert placement="before" type="Microsoft.Ddue.Tools.TransformComponent" />
-      <insertConceptual placement="before" type="Microsoft.Ddue.Tools.TransformComponent" />
-      <!--configureMethod name="ConfigureComponent" /-->
-      <defaultConfiguration>
-        <!-- Base path for relative filenames in source attributes (optional) -->
-       <basePath value="{@ProjectFolder}" />
-       <!-- Connect to language filter (optional).  If omitted, language filtering is enabled by default. -->
-       <languageFilter value="true" />
+    <dependencies>
+      <component id="Post-transform Component" />
+    </dependencies>
+    <insert placement="before" type="Microsoft.Ddue.Tools.TransformComponent" />
+    <insertConceptual placement="before" type="Microsoft.Ddue.Tools.TransformComponent" />
+    <configureMethod name="-" />
+    <defaultConfiguration>
+      <helpType value="{@HelpFileFormat}" />
+      <basePath value="{@WorkingFolder}" />
+      <languageFilter value="false" />
     </defaultConfiguration>
   </component>
 </components>

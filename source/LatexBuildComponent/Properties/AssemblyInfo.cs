@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Marcus Cuda")]
 [assembly: AssemblyProduct("LaTeX Build Component")]
-[assembly: AssemblyCopyright("Copyright © Marcus Cuda 2008-2009")]
+[assembly: AssemblyCopyright("Copyright © Marcus Cuda 2008-2011")]
 [assembly: AssemblyTrademark("http://marcuscuda.com")]
 [assembly: AssemblyCulture("")]
 
