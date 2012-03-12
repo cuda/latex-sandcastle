@@ -1,4 +1,4 @@
-Currently only support HTML Help 1.x output.
+Currently only supports HTML Help 1.x and Website output.
 
 Requirements:
  Sandcastle Help File Builder v1.9.3.4 Beta 2
