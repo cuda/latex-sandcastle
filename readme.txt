@@ -13,7 +13,7 @@ From the zip file:
 3. In your SHFB configuration file add the "LaTeX Build Component" to the ComponentConfigurations property of the build section.
 4. Add <latex> tags to your XML comments.  The <latex> tag must be placed inside regular XML comment tags.
    Example: ///<summary><latex>f(x)=x^2</latex></summary>
-   For complex LaTeX code, it should be placed in in CDATA tag, i.e. <latex><!CDATA[f(x)=x^2]]></latex>
+   For complex LaTeX code, it should be placed in a CDATA tag, i.e. <latex><!CDATA[f(x)=x^2]]></latex>
 5. Run SHFB as usual.   
 
 From Source:
@@ -26,6 +26,6 @@ From Source:
 4. In your SHFB configuration file add the "LaTeX Build Component" to the ComponentConfigurations property of the build section.
 5. Add <latex> tags to your XML comments.  The <latex> tag must be placed inside regular XML comment tags.
    Example: ///<summary><latex>f(x)=x^2</latex></summary>
-   For complex LaTeX code, it should be placed in in CDATA tag, i.e. <latex><!CDATA[f(x)=x^2]]></latex>
+   For complex LaTeX code, it should be placed in a CDATA tag, i.e. <latex><!CDATA[f(x)=x^2]]></latex>
 6. Run SHFB as usual.
 
