@@ -1,6 +1,6 @@
 <!--
  ****************************************************************************
- * Copyright(c) 2002-2008, John Forkosh Associates, Inc. All rights reserved.
+ * Copyright(c) 2002-2012, John Forkosh Associates, Inc. All rights reserved.
  *           http://www.forkosh.com   mailto: john@forkosh.com
  * ==========================================================================
  * This file is part of mimeTeX, which is free software. You may redistribute
@@ -22,7 +22,7 @@
  -->
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
  "http://www.w3.org/TR/html4/loose.dtd">
- <!-- "http://www.forkosh.dreamhost.com/loose.dtd" -->
+ <!-- "http://www.forkosh.com/loose.dtd" -->
 
 <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Preamble
@@ -84,29 +84,116 @@ Preamble
                   color: black }
       p.warning  { color: red } /* defines  p class=warning */
     </style>
-  <script type="text/javascript">
-    <!--
-    // add/clear text to expression
-    function eqntext(eqn)
-      { var eqnSrc = document.getElementById(eqn).src;
-        var texSrc = eqnSrc.substring(eqnSrc.indexOf('?')+1,eqnSrc.length);
-        addtext(texSrc); }
-    function addtext(text)
-      { cleartext();
-        document.expression.formdata.value += unescape(text);
-        document.expression.formdata.focus(); }
-    function cleartext()
-      { document.expression.formdata.value = "";
-        //document.inlineframe.value = "";
-        document.expression.formdata.focus(); }
-    -->
-  </script>
+    <style type="text/css">
+      a.info{
+        position:relative;
+        z-index:24;
+        /*background-color:#8692A5;*/
+        visibility: inherit;
+        text-decoration: none; }
+      a.info:hover{
+        z-index:25;
+        /*background-color:#999999;
+        color: #FFFF00;*/
+        text-decoration: none; }
+      a.info span{
+        display: none;
+        /*color: #FFFF00;*/ }
+      a.info:hover span{
+        display:block;
+        position:absolute;
+        top:2em;
+        left:2em;
+        /*width:15em;*/
+        border:1px solid #330066;
+        background-color:#FFFF99;
+        color:#660000;
+        text-align: left;
+        font-size: 13px;
+        font-weight: normal;
+        margin: 3px;
+        padding: 6px; }
+      a.info:link {
+        text-decoration: none;
+        /*color: #FFFF00;*/ /*themecolour1%0;*/ }
+      a.info:visited {
+        text-decoration: none;
+        /*color: #FFFF00;*/ /*themecolour1%0;*/ }
+    </style>
+    <script type="text/javascript">
+      <!--
+      // add/clear text to expression
+      function eqntext(eqn)
+        { var eqnSrc = document.getElementById(eqn).src;
+          var texSrc = eqnSrc.substring(eqnSrc.indexOf('?')+1,eqnSrc.length);
+          addtext(texSrc); }
+      function addtext(text)
+        { cleartext();
+          document.expression.formdata.value += unescape(text);
+          document.expression.formdata.focus(); }
+      function cleartext()
+        { document.expression.formdata.value = "";
+          //document.inlineframe.value = "";
+          document.expression.formdata.focus(); }
+      -->
+    </script>
 
-<!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-+ javascript from mathtran.org to render <img alt="tex:math expression">
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-<script type="text/javascript"
-    src="http://www.mathtran.org/js/mathtran_img.js"></script>
+  <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  + php functions to use Vertical-Align: info from mimetex
+  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+  <?php
+  //$mimetexurl = "../cgi-bin/mimetex.cgi?";
+  $mimetexurl = "http://www.forkosh.com/mimetex.cgi?";
+  //$mimetexurl = "http://psi2star/cgi-bin/mimetex.cgi?";
+  function verticalalign( $expression ) {
+    global $mimetexurl;
+    // note: curl_init() stops at the first whitespace char in $url argument
+    $expression = ereg_replace(" ","~",$expression); // remove whitespace
+    $url     = $mimetexurl . "\depth~" . $expression;
+    $valign  = "0";
+    $options = array(
+        CURLOPT_RETURNTRANSFER => true,     // return web page
+        CURLOPT_HEADER         => true);    // return headers
+    $ch      = curl_init( $url );
+    //curl_setopt_array( $ch, $options );
+    curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+    curl_setopt( $ch, CURLOPT_HEADER, true );
+    $gif     = curl_exec( $ch );
+    $errno   = curl_errno( $ch );
+    $error   = curl_error( $ch );
+    //$info  = curl_getinfo( $ch );
+    curl_close( $ch );
+    //echo '<br> url= ',$url,'<br>',"\n";
+    //echo '<br> gif=<br>',$gif,'<br>',"\n";
+    if ( $errno == 0 ) {
+      $fields = explode("Vertical-Align:",$gif);
+      $vfield = trim($fields[1]);
+      $fldlen = strspn($vfield,"+-0123456789");
+      $valign = substr($vfield,0,$fldlen); }
+    else {
+      echo 'verticalalign> errno ',$errno,' = ',$error,'<br><br>',"\n"; }
+    return $valign;
+    }
+  function mimetextag( $label, $expression ) {
+    global $mimetexurl;
+    $valign = verticalalign($expression);
+    $url    = $mimetexurl . $expression;
+    //echo ' valign=',$valign,' ',"\n";
+    echo  '<a href="#preview" class="info"><img id="',$label,'" ';
+    echo  ' onclick="eqntext(',"'",$label,"'",')"  ';
+    echo  ' src="',$url,'" ';
+    echo  ' style="Vertical-Align:',$valign,'px"   ';
+    echo  ' alt="" border=0>';
+    echo   '<span>',$expression,'</span>';
+    echo  '</a>', "\n";
+    }
+  ?>
+
+  <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  + javascript from mathtran.org to render <img alt="tex:math expression">
+  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+  <!-- script type="text/javascript"
+    src="http://www.mathtran.org/js/mathtran_img.js"></script -->
   </head>
 <body>
 
@@ -125,7 +212,10 @@ Banner across top of page, containing title and two example mimeTeX images.
    <td align="center" valign="middle">
     <center> <font color="maroon" size=4>
     <b><nobr>m i m e T e X &nbsp; m a n u a l</nobr></b> <br>
-    <font size=3>( for mimeTeX version 1.70 )</font> <br>
+    <font size=3>( for mimeTeX version
+      <a href="#preview"><img id="imageVer1" onclick="eqntext('imageVer1')"
+      src="../cgi-bin/mimetex.cgi?\small\versionnumber"
+      alt="" border=0 align=bottom></a> )</font> <br>
     <font size=3> <b>Click for:</b>&nbsp;
      <!-- <a href="http://www.forkosh.com" target="_top">homepage</a>, &nbsp;
      <a href="http://www.forkosh.com/resume.html" target="_top">resume</a> -->
@@ -133,6 +223,12 @@ Banner across top of page, containing title and two example mimeTeX images.
      LaTeX tutorial</a><br>
      <a href="http://www.forkosh.com/mimetex.html" target="_top">
      mimeTeX QuickStart</a><br>
+
+     <a href="http://www.forkosh.com/cgi-bin/weblist.cgi?-t=weblist
+     &-f=sources/weblistemplate.html&files=@sources/sourcecode/mimetex.lis
+     &copyright=2002-2011&counter=mimetex
+     &title=mimetex&description=m i m e T e X  S o u r c e   L i s t i n g"
+     target="_top">mimeTeX Source Listing</a><br>
      <a href="http://www.forkosh.com/mimetex.zip">
      <!-- jfa <a href="ftp://ftp.tex.ac.uk/tex-archive/support/mimetex/mimetex.zip"></a> -->
      <font size=4>download&nbsp;mimeTeX</font></a></font>
@@ -144,11 +240,18 @@ Banner across top of page, containing title and two example mimeTeX images.
     alt="" border=0 align=middle></a> <br>
     <a href="#examples">more_examples...</a> </td>
   </tr>
+  <tr> <td align="center" colspan="3">
+    This page discusses mimeTeX, a program that displays math on the web.<br>
+    (<font size=3>See
+    <a href="http://www.americanscientist.org/issues/pub/2009/3/writing-math-on-the-web/1"
+    target="_top">Writing&nbsp;Math&nbsp;on&nbsp;the&nbsp;Web</a>
+    for a more general discussion.</font>)
+    </td> </tr>
  </table>
 </center>
 <hr size=4>
 <center><b><font color="maroon" size=3>
-Copyright <font size=5>&copy;</font> 2002-2008,
+Copyright <font size=5>&copy;</font> 2002-2012,
 <a href="http://www.forkosh.com">John Forkosh Associates, Inc.</a> <br>
 email: <a href="mailto:john&#64;forkosh&#46;com">john&#64;forkosh&#46;com</a>
 </font></b> <br><br>
@@ -177,7 +280,8 @@ Table of Contents
    <a href="#introduction">&nbsp; (I) Introduction &nbsp;</a><br>
     <a href="#quickstart"> a. Quick Start </a><br>
     <a href="#examples">   b. Examples </a><br>
-    <a href="#gpl">        c. GPL License </a> </font> </td>
+    <a href="#scripts">    c. Scripts&amp;Plugins </a><br>
+    <a href="#gpl">        d. GPL License </a> </font> </td>
   <td valign="top" align="center" width=150> <font size=3>
    <a href="#build">&nbsp; (II) Building mimeTeX &nbsp;</a><br>
     <a href="#compile">    a. Compile </a><br>
@@ -193,7 +297,8 @@ Table of Contents
     <a href="#array">      e. \begin{array} </a><br>
     <a href="#picture">    f. \picture(&nbsp;){&nbsp;} </a><br>
     <a href="#commands">   g. Other Commands </a><br>
-    <a href="#exceptions"> h. Other Exceptions </a> </font> </td>
+    <a href="#exceptions"> h. Other Exceptions </a><br>
+    <a href="#messages">   i. Errors and Messages </a> </font> </td>
   <td valign="top" align="center" width=150> <font size=3>
    <a href="#appendices">&nbsp; &nbsp; (IV) Appendices &nbsp; &nbsp;</a><br>
     <a href="#fonts">      a. Fonts </a><br>
@@ -202,11 +307,31 @@ Table of Contents
     <br><a href="#remarks"> &nbsp; Remarks &nbsp; </a> </font> </td>
  </tr>
 </table>
+</center>
+
+<!-- br -->
+<p style="margin-left:3em;margin-right:3em;">
+   <font color="blue" size=3> This page contains more information
+   than you'll probably need to read.  If you follow the
+   <font color="maroon">Installation&nbsp;and&nbsp;Usage&nbsp;Summary</font>
+   below, try installing mimeTeX immediately.  <!-- If you need
+   more information, --> Or continue reading until you feel comfortable
+   trying to install mimeTeX.  <!-- Return to this page as needed. -->
+   Prerequisites are: some knowledge of your OS's shell,
+   of installing cgi's, of LaTeX. </font>
+   <font color="maroon" size=3> <br>
+   &nbsp; &nbsp; &nbsp; &nbsp;
+        <b>&quot</b><i>Computers are like Old Testament gods<b>:</b>
+        lots of rules and no mercy.</i><b>&quot</b><br>
+   &nbsp; &nbsp; &nbsp; &nbsp;
+        <b>&#150;&#150;</b> Joseph Campbell, The Power of Myth &nbsp;
+        (Doubleday 1988, page 18) </font> </p>
 
 <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 + Installation and Usage Summary
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-<br>
+<!-- br -->
+<center>
 <table border="0">
 <tr> <!-- banner -->
  <td align="left">
@@ -260,277 +385,47 @@ SECTION I.  INTRODUCTION
     And mimeTeX is an entirely separate little program that doesn't use
     TeX or its fonts in any way.  It's just one cgi that you put in your
     site's cgi-bin/ directory, with no other dependencies.  So mimeTeX
-    is very easy to <a href="#quickbuild">install</a>.  And it's equally
-    easy to use.  Just place an html &lt;img&gt; tag in your document
-    wherever you want to see the corresponding LaTeX expression.
-    For example, </p>
-<pre>  &lt;img&nbsp;src="../cgi-bin/mimetex.cgi?f(x)=\int_{-\infty}^xe^{-t^2}dt"
-   alt="" border=0 align=middle&gt;</pre> <p class="continue">immediately
-    generates the corresponding gif image on-the-fly, displaying
-    <a href="#preview"><img id="imageI1" onclick="eqntext('imageI1')"
-    src="../cgi-bin/mimetex.cgi?\normalsize
-    f(x)=\int\limits_{-\infty}^xe^{-t^2}dt"
-    alt="" border=0 style="Vertical-Align:-11px"></a>
-    wherever you put that &lt;img&gt tag.
+    is very easy to <a href="#build">install</a>. <br>
+    <nobr> &nbsp; &nbsp; &nbsp; &nbsp;
+       Just download <a href="http://www.forkosh.com/mimetex.zip">
+       mimetex.zip</a> and then type </nobr> <br>
+       <nobr><b> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+          unzip mimetex.zip</b></nobr> <br>
+       <nobr><b> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+          cc &#150;DAA mimetex.c gifsave.c
+          &#150;lm &#150;o mimetex.cgi</b></nobr> <br>
+    <nobr> &nbsp; &nbsp; &nbsp; &nbsp;
+       Now just <b>mv</b> mimetex.cgi to your <b>cgi-bin/</b>
+       directory, </nobr> <br>
+    <nobr> &nbsp; &nbsp; &nbsp; &nbsp;
+       set permissions as necessary, and you're all done. </nobr> <br>
+    <br>
+    And mimeTeX is equally easy to <a href="#quickstart">use</a><b>:</b>
+    &nbsp; just place an html &lt;img&gt; tag in your document
+    wherever you want to see the corresponding LaTeX expression. <br>
+    <nobr> &nbsp; &nbsp; &nbsp; &nbsp;
+       For example, the &lt;img&gt tag </nobr> <br>
+       <nobr><b> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+          &lt;img&nbsp;
+          src="../cgi-bin/mimetex.cgi?f(x)=\int_{-\infty}^xe^{-t^2}dt" &gt;</b></nobr><br>
+    <nobr> &nbsp; &nbsp; &nbsp; &nbsp;
+       immediately generates the corresponding gif image on-the-fly,</nobr><br>
+       <nobr> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+          displaying &nbsp;
+          <?php mimetextag('imageI1',
+          '\normalsize f(x)=\int\limits_{-\infty}^xe^{-t^2}dt'); ?>
+          &nbsp; wherever you put that tag.</nobr><br>
+    <br>
     MimeTeX doesn't need intermediate dvi-to-gif conversion, and it doesn't
     create separate gif files for each converted expression.
     (But you can enable image caching with mimeTeX's
     &nbsp; <b>-DCACHEPATH=\&quot;<i>path/</i>\&quot;</b> &nbsp;
-    <a href="#options">compile&nbsp;option</a>.) </p>
-
-<h3> <a name="plugins">
-mimeTeX plugins<font size=5>...</font></a> </h3>
-<p> There's no inherent need to repeatedly write the cumbersome
-    &lt;img&gt; tag illustrated above.  You can write your own <a href=
-    "http://java.sun.com/j2ee/1.4/docs/tutorial/doc/JSPIntro9.html#wp73314"
-    target="_top">custom&nbsp;tags</a>,
-    or write a wrapper&nbsp;script around mimeTeX to simplify the
-    notation. </p>
-
-<p style="margin-bottom:0">  For example,
-    the following javascript snippet (based on
-    <a href="http://www.mathtran.org" target="_top">mathtran</a>'s
-    <a href="http://www.mathtran.org/js/mathtran_img.js"
-    target="_top">mathtran_img.js</a>) lets you just write &nbsp;
-    <b>&lt;img&nbsp;alt="mimetex:c=\sqrt{a^2+b^2}"&gt;</b> &nbsp;
-    wherever you want to see&nbsp;<a href="#preview"><img id="imageJS1"
-    onclick="eqntext('imageJS1')" src="../cgi-bin/mimetex.cgi?
-    \normalsize c=\sqrt{a^2+b^2}" alt="" border=0
-    style="Vertical-Align:-1px"></a>&nbsp; </p>
-    <pre class="medium" style="margin-top:0;margin-bottom:0"
->   &lt;script type="text/javascript"&gt;
-   &lt;!--
-   // Create a namespace to hold variables and functions
-   mimetex = new Object();
-   // Change this to use your server
-   mimetex.imgSrc = "http://www.<i>yourdomain</i>.com/cgi-bin/mimetex.cgi?";
-   // Transform the whole document: add src to each img with
-   // alt text starting with "mimetex:", unless img already has a src.
-   mimetex.init = function () {
-       if (! document.getElementsByTagName) return;
-       var objs = document.getElementsByTagName("img");
-       var len  = objs.length;
-       for (i=0; i&lt;len; i++) {
-          var img = objs[i];
-          if (img.alt.substring(0,8) == 'mimetex:')
-             if (!img.src) {
-                var tex_src = img.alt.substring(8);
-                img.src = mimetex.imgSrc + encodeURIComponent(tex_src);
-                // Append TEX to the class of the IMG.
-                img.className +=' tex'; }
-          }
-       mimetex.hideElementById("mimetex.error"); }
-   // Utility function
-   mimetex.hideElementById = function (id) {
-       var obj = document.getElementById(id);
-       if (obj) obj.style.display = 'none'; }
-   // resolve a cross-browser issue (see <a href="http://scottandrew.com/weblog/articles/cbs-events" target="_top">CBS&nbsp;events</a>)
-   mimetex.addEvent = function (obj, evType, fn, useCapture) {
-       if (obj.addEventListener) { //For Mozilla.
-           obj.addEventListener(evType, fn, useCapture);
-           return true; }
-       else if (obj.attachEvent) { //For Internet Explorer.
-           var r = obj.attachEvent("on"+evType, fn);
-           return r; }
-       }
-   // Initialize after entire document is loaded
-   mimetex.addEvent(window, 'load', mimetex.init, false);
-   --&gt;
-   &lt;/script&gt;</pre>
-
-<p style="margin-bottom:0">
-    Bulletin boards, wikis, etc, can also incorporate mimeTeX images
-    with short scripts.  For example, if you're using
-    <a href="http://www.phpbb.com" target="_top">phpBB2</a>, then
-    <a href="http://www.themathforum.com/" target="_top">Jameson</a>
-    contributed the following typical one-line mod that lets you write
-    <b>[tex]&nbsp;c=\sqrt{a^2+b^2}&nbsp;[/tex]</b> to obtain the
-    same&nbsp;<a href="#preview"><img id="imageJS2"
-    onclick="eqntext('imageJS2')" src="../cgi-bin/mimetex.cgi?
-    \normalsize c=\sqrt{a^2+b^2}" alt="" border=0
-    style="Vertical-Align:-1px"></a> image illustrated above&nbsp; </p>
-    <pre class="medium" style="margin-top:0;margin-bottom:0"
->   #--------[open]-----------------------------------------------------
-     /includes/bbcode.php
-   #--------[find]-----------------------------------------------------
-     // Remove our padding from the string..
-   #--------[before, add]----------------------------------------------
-     $text = preg_replace('/\[tex\](.*?)\[\/tex\]/ie',
-     "'&lt;img src=\"/cgi-bin/mimetex.cgi?'.rawurlencode('$1').'\" align=\"middle\" /&gt;'",
-     $text);</pre>
-<p class="continue" style="margin-top:0"> If you're using
-     <a href="http://www.phpbb.com" target="_top">phpBB3</a>,
-     then no mod is even needed.
-     Just click Postings from the Administrator Control Panel,
-     and add the custom BBCode&nbsp;<b>[tex]{TEXT}[/tex]</b> &nbsp;
-     with the HTML replacement
-     <b>&lt;img&nbsp;src="/cgi-bin/mimetex.cgi?{TEXT}"&nbsp;align=middle&gt;</b></p>
-
-<p> Similarly, <a href="http://www.pmichaud.com/wiki/PmWiki/PmWiki"
-    target="_top">PmWiki</a> also has a
-    <a href="http://www.pmichaud.com/wiki/Cookbook/MimeTeX" target="_top">
-    mimeTeX&nbsp;plugin</a> that lets you just write
-    <b>{$&nbsp;f(x)=\int_{-\infty}^xe^{-t^2}dt&nbsp;$}</b>
-    to obtain that same image. &nbsp; Several other packages
-    also have similar mimeTeX plugins: </p>
-    <center><table>
-     <tr> <td align=center> <u>&nbsp;<b>Package</b>&nbsp;</u> </td>
-      <td> &nbsp; </td>
-      <td align=center> <u>&nbsp;&nbsp;<b>Plugin</b>&nbsp;&nbsp;</u> </td>
-      </tr>
-     <tr> <td align=center>
-	  <a href="http://www.pmichaud.com/wiki/PmWiki/PmWiki" target="_top">
-	  PmWiki</a> </td> <td> &nbsp; </td>
-	  <td align=center>
-	  <a href="http://www.pmichaud.com/wiki/Cookbook/MimeTeX"
-	  target="_top">mimeTeX&nbsp;plugin</a> </td> </tr>
-     <tr> <td align=center>
-	  <!-- a href="http://www.wikimedia.org/wiki/Main_Page" -->
-	  <a href="http://www.wikimediafoundation.org/wiki/Main_Page"
-          target="_top">Wikimedia</a> </td>
-	  <td align=center> &nbsp; </td>
-	  <td align=center>
-	  <!-- a href="http://meta.wikimedia.org/wiki/Mimetex_alternative" -->
-	  <a href="http://www.mediawiki.org/wiki/Mimetex_alternative"
-	  target="_top">&quot;mimeTeX&nbsp;alternative&quot;</a> </td> </tr>
-<!-- ***redirect loop***
-     <tr> <td align=center>
-	  <a href="http://www.unitorganizer.com/mathwiki/index.php/Main_Page"
-	  target="_top">MathWiki</a> </td> <td> &nbsp; </td>
-	  <td align=center> <a href=
-	  "http://www.unitorganizer.com/mathwiki/index.php/MimetexParser"
-	  target="_top">&quot;mimeTeX&nbsp;Parser&quot;</a> </td> </tr>
--->
-     <tr> <td align=center>
-	  <a href="http://forums.punbb.org/" target="_top">PunBB</a> </td>
-	  <td> &nbsp; </td> <td align=center>
-	  <a href="http://www.math-linux.com/spip.php?article44"
-	  target="_top">mimeTeX&nbsp;plugin</a> </td> </tr>
-     <tr> <td align=center>
-	  <!-- a href="http://www.sixapart.com/movabletype/" -->
-	  <a href="http://www.movabletype.com/"
-	  target="_top">Movable&nbsp;Type</a> </td> <td> &nbsp; </td>
-	  <td align=center> <a href=
-	  "http://www.unitorganizer.com/myblog/2006/08/creating_equations_in_movable.html"
-          target="_top">mimeTeX&nbsp;plugin</a> </td> </tr>
-     <tr> <td align=center>
-	  <a href="http://wordpress.org/" target="_top">WordPress</a> </td>
-	  <td> &nbsp; </td> <td align=center> <a href=
-	  "http://www.anlak.com/?page_id=66" target="_top">
-     <!-- "http://sixthform.info/steve/wordpress/index.php?p=13&page=2" -->
-	  mimeTeX&nbsp;plugin</a> <!-- &nbsp; (see item 9) --> </td> </tr>
-     <!--- dead links --->
-     <!-- tr> <td align=center>
-	  <a href="http://www.phpbb.com" target="_top">phpBB</a> </td>
-	  <td> &nbsp; </td> <td align=center>
-	  <a href=
-	  "http://www.themathforum.com/math/showthread.php?p=621#post621"
-	  target="_top">mimeTeX&nbsp;plugin</a> </td> </tr -->
-     <!-- tr> <td align=center>
-	  <a href="http://www.mamboserver.com/" target="_top">Mambo</a> </td>
-	  <td> &nbsp; </td> <td align=center>
-	  <a href="http://mamboxchange.com/projects/mimetexbot/"
-	  target="_top">&quot;mimeTeX&nbsp;bot&quot;</a> </td> </tr -->
-    </table></center>
-
-<p> <b>Please note:</b> If you're writing your own plugin for mimeTeX,
-    please don't write php code using <b>system(&nbsp;)</b>, or any other
-    shell escape mechanism, just to cache images.  Use mimeTeX's
-    &nbsp; <b>-DCACHEPATH=\&quot;<i>path/</i>\&quot;</b> &nbsp;
-    <a href="#options">compile&nbsp;option</a> instead.
-    <b>system(&nbsp;)</b> raises security
-    issues, either real ones if used carelessly, or just in the minds of
-    system administrators.  Either way, I've received many emails from
-    people unable to use mimeTeX because of unnecessary <b>system(&nbsp;)</b>
-    calls prohibited by security-conscious sysadmins.  MimeTeX itself poses
-    minimal risk when used as illustrated above, but you're responsible
-    for any plugin/wrapper script you write around it. </p>
-
-<h3> <a name="valignment">
-Vertical alignment<font size=5>...</font></a> </h3>
-<p> An image like
-    <a href="#preview"><img id="imageAV1" onclick="eqntext('imageAV1')"
-    src="../cgi-bin/mimetex.cgi?
-    \normalsize f(x)=\int\limits_{-\infty}^xe^{-t^2}dt"
-    alt="" border=0 align=middle></a>
-    doesn't look as good as the same image
-    <a href="#preview"><img id="imageAV2" onclick="eqntext('imageAV2')"
-    src="../cgi-bin/mimetex.cgi?
-    \normalsize f(x)=\int\limits_{-\infty}^xe^{-t^2}dt"
-    alt="" border=0 style="Vertical-Align:-11px"></a>
-    that's vertically aligned with your surrounding text.
-    Along with several standard 
-    <a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html">
-    HTTP&nbsp;header&nbsp;fields</a>, mimeTeX also emits a special
-    &nbsp; <b>Vertical-Align:&nbsp;&#150;<i>nn</i></b> &nbsp;
-    header, where <b>&#150;<i>nn</i></b> is the number of pixels
-    (usually negative as illustrated) needed for a
-    &nbsp; <b>style="Vertical-Align:&nbsp;&#150;<i>nn</i>&nbsp;px"</b>
-    &nbsp; attribute in the <b>&lt;img&gt;</b>&nbsp;tag used to
-    render your expression. </p>
-
-<p> But mimeTeX's special Vertical-Align: header
-    is unrecognized and ignored by your browser.  You have to get the
-    header, interpret it, and write the corresponding &lt;img&gt; tag.
-    The only feasible way to do all this is using a scripting language,
-    as illustrated by the following, rather naive, php code </p>
-    <pre class="medium" style="margin-top:.5em;margin-bottom:.5em"
->   &lt;?php
-   $mimetexurl = "http://www.<i>yourdomain</i>.com/cgi-bin/mimetex.cgi?";
-   function verticalalign( $expression ) {
-      global $mimetexurl;
-      // note: curl_init() stops at the first whitespace char in $url argument
-      $expression = ereg_replace(" ","~",$expression); // so remove whitespace
-      $url     = $mimetexurl . $expression;
-      $valign  = "0";
-      $ch      = curl_init( $url );
-      curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-      curl_setopt( $ch, CURLOPT_HEADER, true );
-      $gif     = curl_exec( $ch );
-      $errno   = curl_errno( $ch );
-      curl_close( $ch );
-      if ( $errno == 0 ) {
-        $fields = explode("Vertical-Align:",$gif);
-        $vfield = trim($fields[1]);
-        $fldlen = strspn($vfield,"+-0123456789");
-        $valign = substr($vfield,0,$fldlen); }
-      return $valign;
-      }
-   function mimetextag( $expression ) {
-      global $mimetexurl;
-      $valign = verticalalign($expression);
-      $url    = $mimetexurl . $expression;
-      echo ' &lt;img src="',$url,'" ';
-      echo ' style="Vertical-Align:',$valign,'px" ';
-      echo ' alt="" border=0&gt;', "\n";
-      }
-   ?&gt;</pre>
-
-<p> Now you can write &nbsp;
-    &lt;?php&nbsp;mimetextag('\frac12\left(a^2+b^2\right)');&nbsp;?&gt;
-    wherever you want to see
-    <a href="#preview"><img id="imageAV5" onclick="eqntext('imageAV5')"
-    src="../cgi-bin/mimetex.cgi?
-    \normalsize\frac12\left(a^2+b^2\right)"
-    alt="" border=0 style="Vertical-Align:-5px"></a>
-    correctly aligned.  <!-- Besides making you escape backslashes
-    (each&nbsp;&#092;&nbsp;must be written&nbsp;&#092;&#092;), -->
-    This code calls mimeTeX twice to render each expression,
-    once to get the Vertical-Align: header and build an
-    &lt;img&gt; tag, and then again to render that tag.
-    If you're a good php programmer and write better code,
-    please email me a copy. </p>
-
-<p> If you're using mimeTeX's
-    &nbsp; <b>-DCACHEPATH=\&quot;<i>path</i>/\&quot;</b> &nbsp;
-    <a href="#options">compile&nbsp;option</a>, prefix your
-    <b><i>path</i>/</b> with a leading&nbsp;<b>&#037;</b> and write &nbsp;
-    <b>-DCACHEPATH=\&quot;&#037;<i>path</i>/\&quot;</b> &nbsp; instead.
-    That leading&nbsp;<b>&#037;</b> won't become part of your cache
-    directory's <b><i>path</i>/</b>, but it will signal mimeTeX
-    to cache headers along with each image.
-    Otherwise, the Vertical-Align: information is lost,
-    and attempts to align cached images will fail. </p>
+    <a href="#options">compile&nbsp;option</a>.)
+    &nbsp; And there's no inherent need to repeatedly write the
+    cumbersome &lt;img&gt; tag illustrated above.
+    You can write your own
+    <a href="#scripts">wrapper&nbsp;scripts</a>,
+    discussed below, around mimeTeX to simplify the notation. </p>
 
 <h3> <a name="alternatives">
 Alternative solutions<font size=5>...</font></a> </h3>
@@ -544,17 +439,11 @@ Alternative solutions<font size=5>...</font></a> </h3>
     target="_top">latexrender</a>
     which uses LaTeX to create higher quality images than mimeTeX
     produces.  For comparison,
-    <a href="#preview"><img id="imageI2" onclick="eqntext('imageI2')"
-    src="../cgi-bin/mimetex.cgi?\normalsize
-    f(x)=\int\limits_{-\infty}^xe^{-t^2}dt"
-    alt="" border=0 style="Vertical-Align:-11px"></a>,
+    <?php mimetextag('imageI2',
+    '\small f(x)=\int\limits_{-\infty}^xe^{-t^2}dt'); ?>,
     with arbitrary mean
-    <a href="#preview"><img id="imageI3" onclick="eqntext('imageI3')"
-    src="../cgi-bin/mimetex.cgi?\large\mu" alt="" border=0
-    style="Vertical-Align:-5px"></a> and standard deviation
-    <a href="#preview"><img id="imageI4" onclick="eqntext('imageI4')"
-    src="../cgi-bin/mimetex.cgi?\large\sigma" alt="" border=0
-    style="Vertical-Align:0px"></a>,
+    <?php mimetextag('imageI3','\normalsize\mu'); ?> and standard deviation
+    <?php mimetextag('imageI4','\normalsize\sigma'); ?>,
     and at mimeTeX's next larger font size, looks like </p>
      <center>
       <table>
@@ -569,11 +458,10 @@ Alternative solutions<font size=5>...</font></a> </h3>
 	 alt="" border=0 align=middle> </td>
         <td> &nbsp; </td>
  	<td>
-	 <a href="#preview"><img id="imageI5" onclick="eqntext('imageI5')"
-	 src="../cgi-bin/mimetex.cgi?\large
-         f(x)={\Large\frac1{\sigma\sqrt{2\pi}}}
-	 \int_{\small-\infty}^xe^{-\small\frac{(t-\mu)^2}{2\sigma^2}}dt"
-	 alt="" border=0 align=middle></a> </td>
+	 <?php mimetextag('imageI5',
+	 '\normalsize f(x)={\Large\frac1{\sigma\sqrt{2\pi}}}
+	 \int_{\small-\infty}^xe^{-\small\frac{(t-\mu)^2}{2\sigma^2}}dt'); ?>
+	 </td>
        </tr>
       </table>
      </center>
@@ -617,8 +505,9 @@ Alternative solutions<font size=5>...</font></a> </h3>
 	<td> <font size="4">mimeTeX</font> </td>
        </tr>
        <tr align="center">
-	<td> <img alt="tex:\displaystyle f(x) = \frac1{\sigma\sqrt{2\pi}}
-         \int_{-\infty}^x e^{-\frac{(t-\mu)^2}{2\sigma^2}}dt"> <br> </td>
+	<td> unavailable
+         <!-- img alt="tex:\displaystyle f(x) = \frac1{\sigma\sqrt{2\pi}}
+         \int_{-\infty}^x e^{-\frac{(t-\mu)^2}{2\sigma^2}}dt" --> <br> </td>
         <td> &nbsp; </td>
  	<td>
 	 <a href="#preview"><img id="imageP3" onclick="eqntext('imageP3')"
@@ -739,6 +628,51 @@ QUICKSTART
            in the usual way.  Or see the <b>-DDISPLAYSIZE=<i>n</i></b>
            <a href="#options">compile&nbsp;option</a> below to change
            the default. </li>
+     <!-- <li> As discussed in the <a href="#introduction">Introduction</a>,
+            you can replace cumbersome &lt;img&gt; tags with your own custom
+            tags or wrapper scripts. </li> -->
+       <li> <!-- And --> There are occasional exceptions where I couldn't
+            program mimeTeX to recognize valid LaTeX syntax.
+            One particular "gotcha" is that mimeTeX bindings
+            are pretty much left-to-right.  Thus, for example, although
+            mimeTeX correctly interprets <b>\frac12</b> as well as
+            <b>\frac1{x^2}</b>, etc, the legal LaTeX expression
+            <b>x^\frac12</b> must be written <b>x^{\frac12}</b>.
+            Otherwise, mimeTeX interprets it as <b>{x^\frac}12</b>, i.e.,
+            the same way <b>x^\alpha12</b> would be interpreted, which is
+            nonsense for <b>\frac</b>.  The same "gotcha" also applies to
+            other combinations of commands, e.g., you must write
+            <b>\sqrt{\frac\alpha\beta}</b>, or
+            <b>\frac\alpha{\sqrt\beta}</b>, etc.
+            The <a href="#reference">Syntax&nbsp;Reference</a> section
+            contains much additional information.  <!-- Or you can just begin
+            playing with mimeTeX for yourself to see if it might have
+            any potential usefulness for you. --> </li>
+       <li> And there are various additional syntactic and cosmetic
+            differences between LaTeX and mimeTeX.  For example,
+            bounding boxes for mimeTeX's character bitmaps don't
+            accommodate italic corrections.  Therefore, an expression
+            like <b>\int\nolimits_a^b</b> renders
+            <a href="#preview"><img id="gotcha1" onclick="eqntext('gotcha1')"
+            src="../cgi-bin/mimetex.cgi?
+            \normalsize\displaystyle\int\nolimits_a^b"
+            alt="" border=0 align=middle></a> rather than
+            <a href="#preview"><img id="gotcha2" onclick="eqntext('gotcha2')"
+            src="../cgi-bin/mimetex.cgi?
+            \normalsize\displaystyle\smashmargin{2}{\int\nolimits_a}^b"
+            alt="" border=0 align=middle></a><b>.</b>
+            To render the latter image you have to write the somewhat
+            cumbersome expression <b>{\smashmargin2{\int\nolimits_a}^b}</b>
+            instead (see <a href="#smash">smash</a> below). </li>
+       <li> Besides such exceptions, mimeTeX
+            also provides various LaTeX extensions <!-- , i.e., LaTeX errors
+            permitted by mimetex. -->  (such as font size
+            directives like <b>\Large</b> permitted within mimeTeX
+            math&nbsp;mode expressions, as discussed above).
+            <!-- , but flagged as errors by LaTeX. -->
+            <!-- But note well: if you take advantage of mimeTeX extensions,
+            your math&nbsp;mode expressions will no longer be accepted by
+            standard TeX engines. --> </li>
      </ul>
  <p> <a name="forminput"> </a> <a name="preview"> </a>
      Now enter your own LaTeX expression, use the sample provided,
@@ -776,50 +710,110 @@ QUICKSTART
      src="../cgi-bin/mimetex.cgi?\normalsize
      f(x)=\int\limits_{-\infty}^x e^{-t^2}dt"
      alt="" border=0 style="Vertical-Align:-11px"></a> &nbsp;
-     if you submit the sample expression already in the box. </p>
-
- <p> And the &lt;img&gt; tag to embed this same integral anywhere
-     in your own document is </p>
-<pre> &lt;img&nbsp;src="../cgi-bin/mimetex.cgi?\large f(x)=\int_{-\infty}^xe^{-t^2}dt"
-  alt="" border=0 align=middle&gt;</pre>
-
- <p> <!-- You can see numerous additional examples illustrating html
-     &lt;img&gt; tags using mimeTeX by viewing this page's source. -->
-     The typical mimeTeX &lt;img&gt; tag has the form </p>
+     if you submit the sample expression already in the box.
+     Or see <a href="#messages">error&nbsp;messages</a> whenever an
+     unexpected image is displayed instead. &nbsp; And (as discussed
+     above) the &lt;img&gt; tag to embed this same integral anywhere
+     in your own document is <br>
+       <nobr><b> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+          &lt;img&nbsp;
+          src="../cgi-bin/mimetex.cgi?f(x)=\int_{-\infty}^xe^{-t^2}dt" &gt;</b></nobr><br>
+     </p>
+ <!-- p class="continue">
+     And recall that the typical mimeTeX &lt;img&gt; tag has the form </p>
 <pre> &lt;img&nbsp;src="../cgi-bin/mimetex.cgi?any valid LaTeX/mimeTeX expression"
   alt="" border=0 align=middle&gt;</pre> <p class="continue">
      where <b>../cgi-bin/mimetex.cgi</b> is the relative path from your html
      page containing these tags to your compiled mimetex.cgi program, and
      where <b>any&nbsp;valid&nbsp;LaTeX/mimeTeX&nbsp;expression</b>
-     is pretty much any valid LaTeX math expression: </p> <ul>
-     <!-- <li> As discussed in the <a href="#introduction">Introduction</a>,
-            you can replace cumbersome &lt;img&gt; tags with your own custom
-            tags or wrapper scripts. </li> -->
-       <li> <!-- And --> There are occasional exceptions where I couldn't
-            program mimeTeX to recognize valid LaTeX syntax.
-            One particular "gotcha" is that mimeTeX bindings
-            are pretty much left-to-right.  Thus, for example, although
-            mimeTeX correctly interprets <b>\frac12</b> as well as
-            <b>\frac1{x^2}</b>, etc, the legal LaTeX expression
-            <b>x^\frac12</b> must be written <b>x^{\frac12}</b>.
-            Otherwise, mimeTeX interprets it as <b>{x^\frac}12</b>, i.e.,
-            the same way <b>x^\alpha12</b> would be interpreted, which is
-            nonsense for <b>\frac</b>.  The same "gotcha" also applies to
-            other combinations of commands, e.g., you must write
-            <b>\sqrt{\frac\alpha\beta}</b>, or
-            <b>\frac\alpha{\sqrt\beta}</b>, etc.
-            The <a href="#reference">Syntax&nbsp;Reference</a> section
-            contains much additional information.  <!-- Or you can just begin
-            playing with mimeTeX for yourself to see if it might have
-            any potential usefulness for you. --> </li>
-       <li> Besides such exceptions, mimeTeX
-            also provides various LaTeX extensions. <!-- , i.e., LaTeX errors
-            permitted by mimetex. -->  For example, font size
-            directives like <b>\Large</b> are permitted within mimeTeX
-            math&nbsp;mode expressions, but flagged as errors by LaTeX.
-            <!-- But note well: if you take advantage of mimeTeX extensions,
-            your math&nbsp;mode expressions will no longer be accepted by
-            standard TeX engines. --> </li> </ul>
+     is pretty much any valid LaTeX math expression: </p -->
+
+<!-- ++++++++
+ <h3> <a name="errormessages">
+ Error messages<font size=5>...</font></a> </h3>
+ <p> Any (La)TeX error is typically also a mimeTeX error.
+     However, mimeTeX has no command line interface or
+     <b>.</b>log file for reporting errors.  Its only
+     communication with you is through the mimeTeX image
+     rendered by your browser.  So error messages are embedded
+     in that image whenever feasible.  For example,
+     suppose you want to see
+      <a href="#preview"><img id="messages1" onclick="eqntext('messages1')"
+      src="../cgi-bin/mimetex.cgi?\normalsize\alpha\beta\gamma\delta"
+      alt="" border=0 align="bottom"></a>
+     but you mistakenly type &nbsp; <b>\alpha\bethe\gamma\delta</b> &nbsp;
+     instead.  Then the image rendered is
+      <a href="#preview"><img id="messages2" onclick="eqntext('messages2')"
+      src="../cgi-bin/mimetex.cgi?\normalsize\alpha\bethe\gamma\delta"
+      alt="" border=0 align="bottom"></a>
+     indicating the unrecognized <b>[\bethe?]</b> where you wanted to type
+     &nbsp; <b>\beta</b> &nbsp; and had hoped to see &nbsp;
+      <a href="#preview"><img id="messages3" onclick="eqntext('messages3')"
+      src="../cgi-bin/mimetex.cgi?\normalsize\bf\beta"
+      alt="" border=0 align="bottom"></a><b>.</b> &nbsp;
+     If your expression contains some unprintable character
+     (meaning any character mimeTeX has no bitmap for),
+     then just &nbsp;
+      <a href="#preview"><img id="messages4" onclick="eqntext('messages4')"
+      src="../cgi-bin/mimetex.cgi?\small\bf[?]"
+      alt="" border=0 align="bottom"></a> &nbsp;
+     is displayed in the corresponding position. </p>
+
+ <p> The preceding example illustrates a pretty trivial error.
+     Any non-trivial errors in your expression are likely to
+     go unrecognized and unreported by mimeTeX, and to render
+     unexpected images.  While checking your input expression
+     for syntax errors, keep in mind the following points
+     about mimeTeX's behavior: </p>
+     <ul>
+       <li> An unmatched left brace &nbsp; <b>{</b> &nbsp; is matched
+            by mimeTeX with a "phantom" right brace &nbsp; <b>}</b> &nbsp;
+            that's imagined to be at the end of your expression. </li>
+       <li> Likewise, an unmatched &nbsp; <b>\left(</b>, &nbsp;
+            or <b>\left\{</b> &nbsp; or <b>\left\</b><i>anything</i>, &nbsp;
+            is matched by mimeTeX with a "phantom" &nbsp; <b>\right.</b>
+            &nbsp; at the end of your expression. </li>
+       <li> On the other hand, an unmatched right brace &nbsp; <b>}</b>
+            &nbsp; is displayed in place, as if you had typed \rbrace. </li>
+       <li> But an unmatched &nbsp; <b>\right\</b><i>anything</i> &nbsp;
+            is interpreted as an
+            <a href="http://www.forkosh.com/mimetexmanual.html?abbreviations"
+            target="_top">abbreviation</a> for <b>\</b>rightarrow
+            followed by <b>\</b><i>anything</i>.  For example, &nbsp;
+            <b>\leff(&nbsp;abc&nbsp;\right)&nbsp;def</b> &nbsp; renders &nbsp;
+              <a href="#preview"><img id="messages5"
+              onclick="eqntext('messages5')"
+              src="../cgi-bin/mimetex.cgi?\small\leff(abc\right)def"
+              alt="" border=0 align="bottom"></a>.
+            </li>
+     </ul>
+++++++++ -->
+
+<!-- ++++++++
+ <h3> <a name="infomessages">
+ Informational messages<font size=5>...</font></a> </h3>
+ <p> The latest release of mimeTeX is version
+       <a href="#preview"><img id="messages11" onclick="eqntext('messages11')"
+       src="../cgi-bin/mimetex.cgi?\small\versionnumber"
+       alt="" border=0 align="bottom"></a>
+     which was last revised
+       <a href="#preview"><img id="messages12" onclick="eqntext('messages12')"
+       src="../cgi-bin/mimetex.cgi?\small\revisiondate"
+       alt="" border=0 align="bottom"></a>.
+     The special mimeTeX directive &nbsp; <b>\version</b> &nbsp;
+     displays that same information, </p>
+      <center>
+       <a href="#preview"><img id="messages13" onclick="eqntext('messages13')"
+       src="../cgi-bin/mimetex.cgi?\version"
+       alt="" border=0 align=middle></a>
+      </center>
+ <p> To check that your own release of mimeTeX is current,
+     type a url into your browser's locator window something like <br>
+        &nbsp; &nbsp; &nbsp; &nbsp;
+     <b>http://www.<i>yourdomain</i>.com/cgi-bin/mimetex.cgi?\version</b> <br>
+     which will display the version and revision date of
+     mimeTeX installed on your server. </p>
+++++++++ -->
 
 
 <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -827,7 +821,7 @@ EXAMPLES
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
 <h2> <a name="examples"> (Ib) Examples &nbsp; </a> </h2>
 
- <p> Here are various additional random examples further demonstrating
+ <p> Here are various additional random examples further illustrating
      mimeTeX's features and usage.  To see how they're done, Click any
      one of them to place its corresponding expression in the
      <a href="#preview">Query&nbsp;Box</a> above.  Then press Submit
@@ -966,9 +960,9 @@ EXAMPLES
   <td align="center">
     <a href="#preview">
     <img id="example7" onclick="eqntext('example7')"
-    src="../cgi-bin/mimetex.cgi?\Large\overbrace{a,...,a}^{\text{k a^,s}},
+    src="../cgi-bin/mimetex.cgi?\large\overbrace{a,...,a}^{\text{k a^,s}},
     \underbrace{b,...,b}_{\text{l b^,s}}\hspace{10}
-    \large\underbrace{\overbrace{a...a}^{\text{k a^,s}},
+    \normalsize\underbrace{\overbrace{a...a}^{\text{k a^,s}},
     \overbrace{b...b}^{\text{l b^,s}}}_{\text{k+l elements}}"
     alt="" border=0 align=middle></a> </td>
   <td>
@@ -987,7 +981,7 @@ EXAMPLES
         <td align="left" colspan=2>
          <a href="#preview">
          <img id="example8a" onclick="eqntext('example8a')"
-         src="../cgi-bin/mimetex.cgi?\Large\scr{J}^{i0}=+\frac i2
+         src="../cgi-bin/mimetex.cgi?\large\scr{J}^{i0}=+\frac i2
          \left[\begin{array}{cc}\sigma_i&0\\0&-\sigma_i\end{array}\right]
          \hspace{10}\scr{J}^{ij}=\frac12\varepsilon_{ijk}
          \left[\begin{array}{cc}\sigma_k&0\\0&\sigma_k\end{array}\right]"
@@ -998,7 +992,7 @@ EXAMPLES
         <td align="left">
          <a href="#preview">
          <img id="example8b" onclick="eqntext('example8b')"
-         src="../cgi-bin/mimetex.cgi?\Large A\ =\ \large\left(
+         src="../cgi-bin/mimetex.cgi?\large A\ =\ \normalsize\left(
          \begin{array}{c.cccc}&1&2&\cdots&n\\
          \hdash1&a_{11}&a_{12}&\cdots&a_{1n}\\
          2&a_{21}&a_{22}&\cdots&a_{2n}\\
@@ -1019,10 +1013,10 @@ EXAMPLES
         <td align="left" colspan="2">
          <a href="#preview">
          <img id="example9c" onclick="eqntext('example9c')"
-         src="../cgi-bin/mimetex.cgi?\normalsize
-         \left(\large\begin{array}{GC+23}
+         src="../cgi-bin/mimetex.cgi?\large
+         \left(\large\begin{array}{GC+45}
          \varepsilon_x\\\varepsilon_y\\\varepsilon_z\\\gamma_{xy}\\
-         \gamma_{xz}\\\gamma_{yz}\end{array}\right)\ {\Large=}
+         \gamma_{xz}\\\gamma_{yz}\end{array}\right)\ {\large=}
          \ \left[\begin{array}{CC}
          \begin{array}\frac1{E_{\fs{+1}x}}
          &-\frac{\nu_{xy}}{E_{\fs{+1}x}}
@@ -1052,7 +1046,7 @@ EXAMPLES
   <td align="center">
     <a href="#preview">
     <img id="example10" onclick="eqntext('example10')"
-    src="../cgi-bin/mimetex.cgi?\Large\left.\begin{eqnarray}
+    src="../cgi-bin/mimetex.cgi?\large\left.\begin{eqnarray}
     x+y+z&=&3\\2y&=&x+z\\2x+y&=&z\end{eqnarray}\right\}"
     alt="" border=0 align=middle></a> </td>
   <td>
@@ -1085,13 +1079,13 @@ using \longxxxarrow[] and \begin{array}
   <td align="left">
     <a href="#preview">
     <img id="example12" onclick="eqntext('example12')"
-    src="../cgi-bin/mimetex.cgi?\Large\hspace{5}\unitlength{1}
+    src="../cgi-bin/mimetex.cgi?\large\hspace{5}\unitlength{1}
     \picture(175,100){ (50,50){\circle(100)}
-    (1,50){\overbrace{\line(46)}^{4$\;\;a}}
+    (1,50){\overbrace{\line(46)}^{3$\;\;a}}
     (52,50){\line(125)} (50,52;115;2){\mid} (52,55){\longleftar[60]}
-    (130,56){\longrightar[35]} (116,58){r} (c85,50;80;2){\bullet}
-    (c85,36){\large-q} (c165,36){\large q}
-    (42,29){\underbrace{\line(32)}_{\small a^2/r\;\;\;}} }"
+    (130,56){\longrightar[35]} (116,58){\small r}
+    (c85,50;80;2){\small\bullet} (c85,36){\small -q} (c165,36){\small q}
+    (42,29){\underbrace{\line(32)}_{\scriptsize a^2/r\;\;\;}} }"
     alt="" border=0 align=middle></a> </td>
   <td valign="middle">
     mimeTeX <a href="#picture">\picture(size){pic_elems}</a>
@@ -1126,10 +1120,11 @@ using \longxxxarrow[] and \begin{array}
     The image at left is picture-in-picture-in-picture. </td>
   </tr>
 </table>
-<br><br>
 
 <!-- font examples
 ++++++++++++++++++ -->
+<!-- font-size-examples-commented-out ---
+<br><br>
 <h3> Some font examples <font size=5>...</font></a> </h3>
  <p> Finally, illustrated below are some examples of fonts and symbols
      available with mimeTeX.  All symbols and sizes from cmr, cmmi,
@@ -1220,12 +1215,299 @@ at mimeTeX font size 4</h3>
 1$\rm~wncyr:~&\cyr A&\cyr a&\cyr B&\cyr b&\cyr V&\cyr v&\cyr G&\cyr g&
 \cyr D&\cyr d&\cyr Dj&\cyr dj&\cyr\=E&\cyr\=e&\cyr Zh&\cyr zh}"
 alt="" border=0 align=middle> </p>
+--- end-of-font-size-examples-commented-out -->
+
+<!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+SCRIPTS & PLUGINS
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+<h2> <a name="scripts"> (Ic) Scripts &amp; Plugins &nbsp; </a> </h2>
+
+<p> Some useful scripts that automatically construct
+    mimeTeX &lt;img&gt; tags for you are illustrated below.
+    And you can also write your own scripts to simplify
+    the HTML notation required to incorporate mimeTeX
+    math images in your pages. </p>
+
+<h3> <a name="plugins">
+mimeTeX plugins<font size=5>...</font></a> </h3>
+<!-- p> There's no inherent need to repeatedly write the cumbersome
+    &lt;img&gt; tag illustrated above.  You can write your own <a href=
+    "http://java.sun.com/j2ee/1.4/docs/tutorial/doc/JSPIntro9.html#wp73314"
+    target="_top">custom&nbsp;tags</a>,
+    or write a wrapper&nbsp;script around mimeTeX to simplify the
+    notation. </p -->
+
+<p style="margin-bottom:0">  <!-- For example, -->
+    The following javascript snippet (based on
+    <a href="http://www.mathtran.org" target="_top">mathtran</a>'s
+    <a href="http://www.mathtran.org/js/mathtran_img.js"
+    target="_top">mathtran_img.js</a>) lets you just write &nbsp;
+    <b>&lt;img&nbsp;alt="mimetex:c=\sqrt{a^2+b^2}"&gt;</b> &nbsp;
+    wherever you want to see&nbsp;<a href="#preview"><img id="imageJS1"
+    onclick="eqntext('imageJS1')" src="../cgi-bin/mimetex.cgi?
+    \normalsize c=\sqrt{a^2+b^2}" alt="" border=0
+    style="Vertical-Align:-1px"></a>&nbsp; </p>
+    <pre class="medium" style="margin-top:0;margin-bottom:0"
+>   &lt;script type="text/javascript"&gt;
+   &lt;!--
+   // Create a namespace to hold variables and functions
+   mimetex = new Object();
+   // Change this to use your server
+   mimetex.imgSrc = "http://www.<i>yourdomain</i>.com/cgi-bin/mimetex.cgi?";
+   // Transform the whole document: add src to each img with
+   // alt text starting with "mimetex:", unless img already has a src.
+   mimetex.init = function () {
+       if (! document.getElementsByTagName) return;
+       var objs = document.getElementsByTagName("img");
+       var len  = objs.length;
+       for (i=0; i&lt;len; i++) {
+          var img = objs[i];
+          if (img.alt.substring(0,8) == 'mimetex:')
+             if (!img.src) {
+                var tex_src = img.alt.substring(8);
+                img.src = mimetex.imgSrc + encodeURIComponent(tex_src);
+                // Append TEX to the class of the IMG.
+                img.className +=' tex'; }
+          }
+       mimetex.hideElementById("mimetex.error"); }
+   // Utility function
+   mimetex.hideElementById = function (id) {
+       var obj = document.getElementById(id);
+       if (obj) obj.style.display = 'none'; }
+   // resolve a cross-browser issue (see <a href="http://scottandrew.com/weblog/articles/cbs-events" target="_top">CBS&nbsp;events</a>)
+   mimetex.addEvent = function (obj, evType, fn, useCapture) {
+       if (obj.addEventListener) { //For Mozilla.
+           obj.addEventListener(evType, fn, useCapture);
+           return true; }
+       else if (obj.attachEvent) { //For Internet Explorer.
+           var r = obj.attachEvent("on"+evType, fn);
+           return r; }
+       }
+   // Initialize after entire document is loaded
+   mimetex.addEvent(window, 'load', mimetex.init, false);
+   --&gt;
+   &lt;/script&gt;</pre>
+
+<p style="margin-bottom:0">
+    Bulletin boards, wikis, etc, can also incorporate mimeTeX images
+    with short scripts.  For example, if you're using
+    <a href="http://www.phpbb.com" target="_top">phpBB2</a>, then
+    <a href="http://www.themathforum.com/" target="_top">Jameson</a>
+    contributed the following typical one-line mod that lets you write
+    <b>[tex]&nbsp;c=\sqrt{a^2+b^2}&nbsp;[/tex]</b> to obtain the
+    same&nbsp;<a href="#preview"><img id="imageJS2"
+    onclick="eqntext('imageJS2')" src="../cgi-bin/mimetex.cgi?
+    \normalsize c=\sqrt{a^2+b^2}" alt="" border=0
+    style="Vertical-Align:-1px"></a> image illustrated above&nbsp; </p>
+    <pre class="medium" style="margin-top:0;margin-bottom:0"
+>   #--------[open]-----------------------------------------------------
+     /includes/bbcode.php
+   #--------[find]-----------------------------------------------------
+     // Remove our padding from the string..
+   #--------[before, add]----------------------------------------------
+     $text = preg_replace('/\[tex\](.*?)\[\/tex\]/ie',
+     "'&lt;img src=\"/cgi-bin/mimetex.cgi?'.rawurlencode('$1').'\" align=\"middle\" /&gt;'",
+     $text);</pre>
+<p class="continue" style="margin-top:0"> If you're using
+     <a href="http://www.phpbb.com" target="_top">phpBB3</a>,
+     then no mod is even needed.
+     Just click Postings from the Administrator Control Panel,
+     and add the custom BBCode&nbsp;<b>[tex]{TEXT}[/tex]</b> &nbsp;
+     with the HTML replacement
+     <b>&lt;img&nbsp;src="/cgi-bin/mimetex.cgi?{TEXT}"&nbsp;align=middle&gt;</b></p>
+
+<p> Similarly, <a href="http://www.pmwiki.org/" target="_top">PmWiki</a>
+    also has a
+    <a href="http://www.pmwiki.org/wiki/Cookbook/MimeTeX" target="_top">
+    mimeTeX&nbsp;plugin</a> that lets you just write
+    <b>{$&nbsp;f(x)=\int_{-\infty}^xe^{-t^2}dt&nbsp;$}</b>
+    to obtain that same image. &nbsp; Several other packages
+    also have similar mimeTeX plugins: </p>
+    <center><table>
+     <tr> <td align=center> <u>&nbsp;<b>Package</b>&nbsp;</u> </td>
+      <td> &nbsp; </td>
+      <td align=center> <u>&nbsp;&nbsp;<b>Plugin</b>&nbsp;&nbsp;</u> </td>
+      </tr>
+     <tr> <td align=center>
+	  <a href="http://www.pmwiki.org" target="_top">
+	  PmWiki</a> </td> <td> &nbsp; </td>
+	  <td align=center>
+	  <a href="http://www.pmwiki.org/wiki/Cookbook/MimeTeX"
+	  target="_top">mimeTeX&nbsp;plugin</a> </td> </tr>
+     <tr> <td align=center>
+	  <!-- a href="http://www.wikimedia.org/wiki/Main_Page" -->
+	  <!-- a href="http://www.wikimediafoundation.org/wiki/Main_Page" -->
+	  <a href="http://www.mediawiki.org/wiki/MediaWiki"
+          target="_top">MediaWiki</a> </td>
+	  <td align=center> &nbsp; </td>
+	  <td align=center>
+	  <!-- a href="http://meta.wikimedia.org/wiki/Mimetex_alternative" -->
+	  <a href="http://www.mediawiki.org/wiki/Mimetex_alternative"
+	  target="_top">&quot;mimeTeX&nbsp;alternative&quot;</a> </td> </tr>
+<!-- ***redirect loop***
+     <tr> <td align=center>
+	  <a href="http://www.unitorganizer.com/mathwiki/index.php/Main_Page"
+	  target="_top">MathWiki</a> </td> <td> &nbsp; </td>
+	  <td align=center> <a href=
+	  "http://www.unitorganizer.com/mathwiki/index.php/MimetexParser"
+	  target="_top">&quot;mimeTeX&nbsp;Parser&quot;</a> </td> </tr>
+-->
+     <tr> <td align=center>
+	  <a href="http://forums.punbb.org/" target="_top">PunBB</a> </td>
+	  <td> &nbsp; </td> <td align=center>
+	  <a href="http://www.math-linux.com/spip.php?article44"
+	  target="_top">mimeTeX&nbsp;plugin</a> </td> </tr>
+     <tr> <td align=center>
+	  <!-- a href="http://www.sixapart.com/movabletype/" -->
+	  <a href="http://www.movabletype.com/"
+	  target="_top">Movable&nbsp;Type</a> </td> <td> &nbsp; </td>
+	  <td align=center> <a href=
+	  "http://www.unitorganizer.com/myblog/2006/08/creating_equations_in_movable.html"
+          target="_top">mimeTeX&nbsp;plugin</a> </td> </tr>
+     <tr> <td align=center>
+	  <a href="http://wordpress.org/" target="_top">WordPress</a> </td>
+	  <td> &nbsp; </td> <td align=center> <a href=
+	  "http://www.anlak.com/?page_id=66" target="_top">
+     <!-- "http://sixthform.info/steve/wordpress/index.php?p=13&page=2" -->
+	  mimeTeX&nbsp;plugin</a> <!-- &nbsp; (see item 9) --> </td> </tr>
+     <tr> <td align=center>
+	  <a href="http://www.joomla.org/"
+	  target="_top">Joomla</a> </td> <td> &nbsp; </td>
+	  <td align=center> <a href=
+	  "http://extensions.joomla.org/component/option,com_mtree/task,viewlink/link_id,5932/Itemid,35/"
+          target="_top">mimeTeX&nbsp;plugin</a> </td> </tr>
+     <tr> <td align=center>
+	  <a href="http://mambo-foundation.org/"
+	  target="_top">Mambo</a> </td> <td> &nbsp; </td>
+	  <td align=center> <a href=
+	  "http://webscripts.softpedia.com/script/Modules/Joomla-Mambo-Modules/MimeTeX-Bot-9250.html"
+          target="_top">&quot;mimeTeX&nbsp;bot&quot;</a> </td> </tr>
+     <!--- dead links --->
+     <!-- tr> <td align=center>
+	  <a href="http://www.phpbb.com" target="_top">phpBB</a> </td>
+	  <td> &nbsp; </td> <td align=center>
+	  <a href=
+	  "http://www.themathforum.com/math/showthread.php?p=621#post621"
+	  target="_top">mimeTeX&nbsp;plugin</a> </td> </tr -->
+     <!-- tr> <td align=center>
+	  <a href="http://www.mamboserver.com/" target="_top">Mambo</a> </td>
+	  <td> &nbsp; </td> <td align=center>
+	  <a href="http://mamboxchange.com/projects/mimetexbot/"
+	  target="_top">&quot;mimeTeX&nbsp;bot&quot;</a> </td> </tr -->
+    </table></center>
+
+<p> <b>Please note:</b> If you're writing your own plugin for mimeTeX,
+    please don't write php code using <b>system(&nbsp;)</b>, or any other
+    shell escape mechanism, just to cache images.  Use mimeTeX's
+    &nbsp; <b>-DCACHEPATH=\&quot;<i>path/</i>\&quot;</b> &nbsp;
+    <a href="#options">compile&nbsp;option</a> instead.
+    <b>system(&nbsp;)</b> raises security
+    issues, either real ones if used carelessly, or just in the minds of
+    system administrators.  Either way, I've received many emails from
+    people unable to use mimeTeX because of unnecessary <b>system(&nbsp;)</b>
+    calls prohibited by security-conscious sysadmins.  MimeTeX itself poses
+    minimal risk when used as illustrated above, but you're responsible
+    for any plugin/wrapper script you write around it. </p>
+
+<h3> <a name="valignment">
+Vertical alignment<font size=5>...</font></a> </h3>
+<p> An image like
+    <a href="#preview"><img id="imageAV1" onclick="eqntext('imageAV1')"
+    src="../cgi-bin/mimetex.cgi?
+    \normalsize f(x)=\int\limits_{-\infty}^xe^{-t^2}dt"
+    alt="" border=0 align=middle></a>
+    doesn't look as good as the same image
+    <a href="#preview"><img id="imageAV2" onclick="eqntext('imageAV2')"
+    src="../cgi-bin/mimetex.cgi?
+    \normalsize f(x)=\int\limits_{-\infty}^xe^{-t^2}dt"
+    alt="" border=0 style="Vertical-Align:-26px"></a>
+    that's vertically aligned with your surrounding text.
+    Along with several standard 
+    <a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html">
+    HTTP&nbsp;header&nbsp;fields</a>, mimeTeX also emits a special
+    &nbsp; <b>Vertical-Align:&nbsp;&#150;<i>nn</i></b> &nbsp;
+    header, where <b>&#150;<i>nn</i></b> is the number of pixels
+    (usually negative as illustrated) needed for a
+    &nbsp; <b>style="Vertical-Align:&nbsp;&#150;<i>nn</i>&nbsp;px"</b>
+    &nbsp; attribute in the <b>&lt;img&gt;</b>&nbsp;tag used to
+    render your expression. This Vertical-Align:&nbsp;header
+    is obtained by placing the directive &nbsp;<b>\depth</b>&nbsp;
+    anywhere in your expression. </p>
+
+<p> But mimeTeX's special Vertical-Align: header
+    is unrecognized and ignored by your browser.  You have to get the
+    header, interpret it, and write the corresponding &lt;img&gt; tag.
+    The only feasible way to do all this is using a scripting language,
+    as illustrated by the following, rather naive, php code </p>
+    <pre class="medium" style="margin-top:.5em;margin-bottom:.5em"
+>   &lt;?php
+   $mimetexurl = "http://www.<i>yourdomain</i>.com/cgi-bin/mimetex.cgi?";
+   function verticalalign( $expression ) {
+      global $mimetexurl;
+      // note: curl_init() stops at the first whitespace char in $url argument
+      $expression = ereg_replace(" ","~",$expression); // so remove whitespace
+      $url     = $mimetexurl . "\depth~" . $expression;
+      $valign  = "0";
+      $ch      = curl_init( $url );
+      curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+      curl_setopt( $ch, CURLOPT_HEADER, true );
+      $gif     = curl_exec( $ch );
+      $errno   = curl_errno( $ch );
+      curl_close( $ch );
+      if ( $errno == 0 ) {
+        $fields = explode("Vertical-Align:",$gif);
+        $vfield = trim($fields[1]);
+        $fldlen = strspn($vfield,"+-0123456789");
+        $valign = substr($vfield,0,$fldlen); }
+      return $valign;
+      }
+   function mimetextag( $expression ) {
+      global $mimetexurl;
+      $valign = verticalalign($expression);
+      $url    = $mimetexurl . "\depth~" . $expression;
+      echo ' &lt;img src="',$url,'" ';
+      echo ' style="Vertical-Align:',$valign,'px" ';
+      echo ' alt="" border=0&gt;', "\n";
+      }
+   ?&gt;</pre>
+
+<p> Now you can write &nbsp;
+    &lt;?php&nbsp;mimetextag('\frac12\left(a^2+b^2\right)');&nbsp;?&gt;
+    wherever you want to see
+    <a href="#preview"><img id="imageAV5" onclick="eqntext('imageAV5')"
+    src="../cgi-bin/mimetex.cgi?
+    \normalsize\frac12\left(a^2+b^2\right)"
+    alt="" border=0 style="Vertical-Align:-7px"></a>
+    correctly aligned. Note that the php code automatically
+    prepends &nbsp;<b>\depth</b>&nbsp; to your expression for you.
+    <!-- Besides making you escape backslashes
+    (each&nbsp;&#092;&nbsp;must be written&nbsp;&#092;&#092;), -->
+    (Also note that this code calls mimeTeX twice to render each
+    expression, once to get the Vertical-Align: header and build
+    an &lt;img&gt; tag, and then again to render that tag.
+    If you're a good php programmer and write better code,
+    please email me a copy.) </p>
+
+<p> If you're using mimeTeX's
+    &nbsp; <b>-DCACHEPATH=\&quot;<i>path</i>/\&quot;</b> &nbsp;
+    <a href="#options">compile&nbsp;option</a>, you can request
+    that all images be cached with Vertical-Align:&nbsp;headers,
+    whether or not they contain the \depth directive. Prefix your
+    <b><i>path</i>/</b> with a leading&nbsp;<b>&#037;</b> and write &nbsp;
+    <b>-DCACHEPATH=\&quot;&#037;<i>path</i>/\&quot;</b> &nbsp; instead.
+    That leading&nbsp;<b>&#037;</b> won't become part of your cache
+    directory's <b><i>path</i>/</b>, but it will signal mimeTeX
+    to cache headers along with each image. (In this case,
+    the directive &nbsp;<b>\nodepth</b>&nbsp; suppresses
+    mimeTeX's header caching for that image.)
+    <!-- Otherwise, the Vertical-Align: information is lost,
+    and attempts to align cached images will fail. --> </p>
 
 
 <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 GPL
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ -->
-<h2> <a name="gpl"> (Ic) GPL License &nbsp; </a> </h2>
+<h2> <a name="gpl"> (Id) GPL License &nbsp; </a> </h2>
 
 <font color="black">
 <b>&quot</b><i>My grandfather once told me there are two kinds of people:<br>
@@ -1250,10 +1532,10 @@ Indira Gandhi, the late Prime Minister of India</font> <br>
      evolve to make this kind of obnoxious banter unnecessary.
      In the meantime, please forgive me my paranoia. </p>
 
- <p> To protect your own intellectual property, I recommend
-     <a href="http://lcweb.loc.gov/copyright/circs/circ1.html"
+ <p> To protect your own intellectual property, I recommend (both are pdf)
+     <a href="http://www.copyright.gov/circs/circ01.pdf"
      target="_top">Copyright&nbsp;Basics</a> from The Library of Congress,
-     in particular <a href="http://www.copyright.gov/circs/circ61.html"
+     in particular <a href="http://www.copyright.gov/circs/circ61.pdf"
      target="_top">Circular&nbsp;61</a>, Copyright Registration for
      Computer Programs.
      <!-- and similarly,
@@ -1266,9 +1548,9 @@ Indira Gandhi, the late Prime Minister of India</font> <br>
      to anything you write the moment it's on paper.  In practice,
      if the matter comes under dispute, the courts look _very_ favorably
      on you for demonstrating your intent by registering the copyright.
-     For example, courts will stop unauthorized use of unregistered
+     <!-- For example, courts will stop unauthorized use of unregistered
      material, but monetary damages are awarded _only_ if you
-     register the copyright before infringement occurs. </p>
+     register the copyright before infringement occurs. --> </p>
 
 
 <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -1373,6 +1655,16 @@ SECTION II.  BUILDING MIMETEX
         <a href="http://www.shitalshah.com">Shital&nbsp;Shah</a>, and
         download <a href="http://www.shitalshah.com/dev/eq2img_all.zip">
         eq2img_all.zip</a> containing Shital's latest code. </li>
+        <li> If you install mimeTeX on one server and try to use it
+        from another, you may instead see messages like <br>
+        <img src="../cgi-bin/mimetex.cgi?\message{3}"
+        alt="" align="middle" border=0> <br>
+        In this case, compile mimetex.cgi with the -DNOREFCHECK switch,
+        <i>e.g.</i>,<br>
+             <nobr> &nbsp; &nbsp; &nbsp; &nbsp; <b>cc -DAA -DNOREFCHECK
+             mimetex.c gifsave.c -lm -o mimetex.cgi</b> </nobr> <br>
+        and read the -DREFLEVELS=<i>n</i> discussion under
+        <a href="#options">compile&nbsp;options</a> below. </li>
         <!-- <li> If you're compiling on Sun or VMS, and see about a zillion
         irritating warnings, try adding <b>-DSIGNEDCHAR</b>
         (for VMS, that's cc/define=(AA,SIGNEDCHAR)&nbsp;mimetex.c) </li> -->
@@ -1564,7 +1856,7 @@ Ascii dump of bitmap image...           Hex dump of colormap indexes...
            <b>\textstyle</b> <a href="#preview">
            <img id="displaysize1" onclick="eqntext('displaysize1')"
            src="../cgi-bin/mimetex.cgi?
-           \normalsize\displaystyle\int\nolimits_a^b"
+           \normalsize\displaystyle\smashmargin{2}{\int\nolimits_a}^b"
            alt="" border=0 align=middle></a> at font sizes <b>\normalsize</b>
            and smaller, and rendered <b>\displaystyle</b> <a href="#preview">
            <img id="displaysize2" onclick="eqntext('displaysize2')"
@@ -1582,7 +1874,57 @@ Ascii dump of bitmap image...           Hex dump of colormap indexes...
            gif images.  Default is 1.25 (rather than the standard 2.2).
            Specify 0.0 to turn off gamma correction (1.0 makes no
            gamma correction but doesn't actually turn it off). </dd>
-      <dt><b>-DNEWCOMMANDS=\"<i>newcommands.h</i>\"</b> </dt>
+      <dt><b>-DINPUTOK</b> </dt>
+       <dd> To enhance mimeTeX's security, the
+           <a href="#input">\input{&nbsp;}</a> command is disabled
+           by default when you compile mimeTeX.  Note that the
+           <a href="#counter">\counter</a> and
+           <a href="#environment">\environment</a> commands are
+           also disabled by default, and <b>-DINPUTOK</b> enables
+           all three commands simultaneously.  (Compile mimeTeX with
+           <b>-DCOUNTEROK</b> to enable only \counter, or with
+           <b>-DENVIRONOK</b> to enable only \environment.) <br>
+           &nbsp; &nbsp; &nbsp; Compiling mimeTeX with the
+           <b>-DINPUTOK</b> switch enables \input{&nbsp;} for all users,
+           subject only to your <b>-DPATHPREFIX</b> restrictions,
+           discussed below.  And the following two switches give you
+           additional control over \input{&nbsp;}'s usage... </dd>
+      <dt> <b>-DINPUTPATH=\"<i>path</i>\" &nbsp; &nbsp; &nbsp; <i>-or-</i><br>
+           -DINPUTPATH=\"<i>path1,path2,etc</i>\"</b> </dt>
+       <dd> Permits <b>\input{<i>filename</i>}</b> for specific
+           <i>filename</i>'s, even when the \input{&nbsp;} command
+           is otherwise disabled (for security). <br>
+           &nbsp; &nbsp; &nbsp; If INPUTPATH is defined, mimeTeX
+           performs a case-insensitive test of \input{&nbsp;}'s
+           <i>filename</i> argument, to verify that it contains
+           the authorized 'path' as a substring. <br>
+           &nbsp; &nbsp; &nbsp; If given several 'path's (second form)
+           then <i>filename</i> must contain either 'path1' or
+           'path2', or etc, as a (case-insensitive) substring. <br>
+           &nbsp; &nbsp; &nbsp; If <i>filename</i> doesn't contain
+           a substring matching any of these path(s), then mimeTeX emits
+           an error message image instead of reading <i>filename</i>. </dd>
+      <dt> <b>-DINPUTREFERER=\"<i>domain</i>\" &nbsp; &nbsp; &nbsp; <i>-or-</i><br>
+           -DINPUTREFERER=\"<i>domain1,domain2,etc</i>\"</b> </dt>
+       <dd> Permits <b>\input{&nbsp;}</b> for users from specific
+           <i>domain</i>'s, even when the \input{&nbsp;} command
+           is otherwise disabled (for security). <br>
+           &nbsp; &nbsp; &nbsp; If INPUTREFERER is defined
+           but INPUTOK is not defined, then mimeTeX
+           performs a case-insensitive test of the user's
+           HTTP_REFERER environment variable, to verify that it contains
+           the authorized 'domain' as a substring. <br>
+           &nbsp; &nbsp; &nbsp; If given several 'domain's (second form)
+           then HTTP_REFERER must contain either 'domain1' or
+           'domain2', or etc, as a (case-insensitive) substring. <br>
+           &nbsp; &nbsp; &nbsp; If HTTP_REFERER doesn't contain
+           a substring matching any of these domain(s), then mimeTeX renders
+           an error message image instead of reading <i>filename</i>.  <br>
+           &nbsp; &nbsp; &nbsp; Finally, if HTTP_REFERER is not found as
+           an environment variable, then mimeTeX renders the
+           same error message image. </dd>
+      <dt><b><a id="newcommands">-DNEWCOMMANDS=\"<i>newcommands.h</i>\"</a>
+      </b> </dt>
        <dd> LaTeX-like <b>\newcommand</b>'s are available in mimeTeX,
            via the following facility to help you define your
            own "new&nbsp;commands" during compilation.  Edit a file named
@@ -1633,6 +1975,21 @@ Ascii dump of bitmap image...           Hex dump of colormap indexes...
            <br> &nbsp; &nbsp; To see many additional examples, search for the
            uppercase string NEWCOMMANDS in mimetex.c, and look below that.
            All the above examples are already there. </dd>
+      <dt> <b>-DNOREFMAXLEN=<i>n</i></b> </dt>
+       <dd> The environment variable HTTP_REFERER identifies the
+           domain a request originates from.  If HTTP_REFERER is not
+           defined, then NOREFMAXLEN is the maximum length query&nbsp;string
+           permitted from unidentified domains.  It defaults to&nbsp;9999,
+           i.e., any query&nbsp;string is permitted, since
+           mail and various other legitimate programs often don't
+           supply an HTTP_REFERER.  See -DREFERER and -DREFLEVELS
+           below for further discussion, and also see -DNOREFSAFELEN
+           immediately below. </dd>
+      <dt> <b>-DNOREFSAFELEN=<i>n</i></b> </dt>
+       <dd> If you compile mimeTeX with either the -DREFERER or
+           -DREFLEVELS switch (discussed below), then the default
+           NOREFMAXLEN value&nbsp;9999 is replaced by the (usually much
+           shorter) NOREFSAFELEN value whose default is&nbsp;24. </dd>
       <dt> <b>-DOPAQUE</b> </dt>
        <dd> By default, mimeTeX renders gif images with black symbols
            on a transparent white background.  Defining OPAQUE renders
@@ -1679,21 +2036,52 @@ Ascii dump of bitmap image...           Hex dump of colormap indexes...
        <dd> Blocks mimeTeX requests from unauthorized domains that
            are using your mimetex.cgi (hence your server's resources)
            without permission. <br>
-           &nbsp; &nbsp; &nbsp; If REFERER is defined, mimeTeX
+           &nbsp; &nbsp; &nbsp; If compiled with -DREFERER, then mimeTeX
            performs a case-insensitive test of the environment variable
            HTTP_REFERER to verify that it contains the authorized 'domain'
-           as a substring. <br>
+           as a substring.  For example, if -DREFERER=\"\",<br>
            &nbsp; &nbsp; &nbsp; If given several 'domain's (second form)
            then HTTP_REFERER must contain either 'domain1' or
            'domain2', or etc, as a (case-insensitive) substring. <br>
            &nbsp; &nbsp; &nbsp; If HTTP_REFERER doesn't contain a substring
-           matching any of these domain(s), then mimeTeX emits an error
-           message image instead of the requested image.  You can manually
-           modify invalid_referer_msg, defined in function main(),
-           to personalize the error message for your own site. <br>
-           &nbsp; &nbsp; &nbsp; Finally, if HTTP_REFERER is not found as
-           an environment variable, then mimeTeX correctly generates the
-           requested image instead of generating an error. </dd>
+           matching any of these domain(s), then mimeTeX emits the error
+           message image<br>
+           <img src="../cgi-bin/mimetex.cgi?\message{0}"
+           alt="" align="middle" border=0> <br>
+           instead of the requested image.  You can manually
+           modify this invalid_referer_msg, which is msgtable[0]
+           defined immediately above function main(),
+           to personalize the error message displayed for your own site. <br>
+           &nbsp; &nbsp; &nbsp; Finally, if you specify <b>-DREFERER</b>
+           (or -DREFLEVELS discussed immediately below) but HTTP_REFERER
+           is not found as an environment variable, then
+           mimeTeX correctly generates images whose QUERY_STRING's
+           contain&nbsp;24 or fewer characters.  For&nbsp;25 or more
+           characters, mimeTeX generates an error.
+           See -DNOREFMAXLEN and -DNOREFSAFELEN above to change
+           the&nbsp;24 limit. </dd>
+      <dt><b>-DREFLEVELS=<i>n</i></b>  &nbsp; &nbsp; &nbsp; <i>-or-</i><br>
+          <b>-DNOREFCHECK</b> </dt>
+       <dd> Besides <b>-DREFERER</b> discussed immediately above,
+           mimeTeX can block requests from HTTP_REFERER's that
+           don't match your HTTP_HOST, <i>i.e.</i>, from pages on
+           different servers than your mimetex.cgi image. <br>
+           &nbsp; &nbsp; &nbsp; The default value of REFLEVELS is&nbsp;3,
+           meaning the topmost three levels of HTTP_REFERER and
+           HTTP_HOST must match.  For example, phy.cam.ac.uk matches
+           math.cam.ac.uk because they share the same topmost three
+           levels cam.ac.uk.  So a page installed at the physics
+           department can use a mimetex.cgi installed at the math
+           department.  If you always want a complete match, compile
+           mimeTeX with <b>-DREFLEVELS=99</b> or any large number.
+           If HTTP_REFERER is not found, then the same&nbsp;24
+           character limit discussed immediately above remains in effect. <br>
+           &nbsp; &nbsp; &nbsp; To completely disable the REFLEVELS check,
+           compile mimeTeX with <b>-DNOREFCHECK</b> (or with
+           <b>-DREFLEVELS=0</b>).  Or, if you supply a specific
+           <b>-DREFERER</b> list of authorized domains, as discussed
+           immediately above, then the REFLEVELS check is automatically
+           disabled. </dd>
       <dt><b>-DSECURITY=<i>n</i></b> </dt>
        <dd> This is essentially a "paranoid" setting that defaults
            to a high value 999, which inhibits some optional logging
@@ -1739,6 +2127,84 @@ Ascii dump of bitmap image...           Hex dump of colormap indexes...
            background.  This option renders white symbols on
            a transparent black background instead (or on an opaque
            black background when combined with <b>-DOPAQUE</b>&nbsp;). </dd>
+
+      <dt> <a name="adswitches"> </a> <font color="black" size="5">
+      <br> <b>Advertising switches</b><font size=5>...</font></font>
+      <br> </dt>
+       <dd style="margin-left:0em;"> The next three switches
+       set up a mimeTeX web service that embeds advertising messages
+       along with rendered images.
+       <!-- See <a href="#webservice">mimeTeX&nbsp;web&nbsp;service</a>
+       above for further discussion. --> <br> <br> </dd>
+
+      <dt> <a name="adfrequencyswitch"> </a>
+      <b>&#150;DADFREQUENCY=0</b> </dt>
+       <dd> If ADFREQUENCY is defined as a positive number <b><i>n</i></b>,
+       then one request out of every <b><i>n</i></b> submitted to mimeTeX
+       is randomly selected to be displayed along with a pre-defined
+       "advertisement".  For example, if your expression is
+       &nbsp; <b>\large\int_0^xe^{-x^2}dx</b>, &nbsp; then the default
+       advertisement displays <br>
+       &nbsp; &nbsp; &nbsp;
+       <a href="#preview"><img id="adswitch1" onclick="eqntext('adswitch1')"
+        src="../cgi-bin/mimetex.cgi?\large\advertisement
+        \int_0^xe^{-x^2}dx" alt="" align="middle" border=0></a>
+       &nbsp; &nbsp; instead of just &nbsp; &nbsp;
+       <a href="#preview"><img id="adswitch2" onclick="eqntext('adswitch2')"
+        src="../cgi-bin/mimetex.cgi?\large
+        \int_0^xe^{-x^2}dx" alt="" align="middle" border=0></a> <br>
+       See the <b>&#150;DADVERTISEMENT</b> switch <!-- immediately -->
+       below for instructions to define your own advertisement replacing
+       my default. </dd>
+
+      <dt> <a name="adhostswitch"> </a>
+      <b>&#150;DHOST_SHOWAD=\"\\000\"</b> </dt>
+       <dd> Advertisement messages are usually displayed randomly,
+       in one request to mimeTeX out of every <b><i>n</i></b>,
+       as defined by the <b>&#150;DADFREQUENCY</b> switch above.
+       But if a HOST_SHOWAD string is also defined,
+       then advertisements are only displayed when mimeTeX is running
+       on a host whose HTTP_HOST (or SERVER_NAME) environment variable
+       contains that string. For example,
+       <b>&#150;DHOST_SHOWAD=\"mathsite\"</b> displays advertisements
+       on www.mathsite.com but never on www.mathhouse.com&nbsp;.
+       The default HOST_SHOWAD value is an empty string,
+       which displays advertisements on any host. </dd>
+
+      <dt> <a name="advertisementswitch"> </a>
+      <b>&#150;DADVERTISEMENT=\"</b><i>filename</i><b>\"</b> </dt>
+       <dd> To define your own advertisement, replacing my default
+       illustrated immediately above, edit a file containing lines
+       of the form <br>
+	<nobr>&nbsp; &nbsp; &nbsp; <b>"\\</b>begin{gather}{\\small\\text<b>"</b></nobr><br>
+        <nobr>&nbsp; &nbsp; &nbsp; &nbsp; <b>"</b>{\\fbox{\\begin{gather}<b>"</b></nobr><br>
+	<nobr>&nbsp; &nbsp; &nbsp; &nbsp; <b>"</b>mime\\TeX rendering courtesy of\\\\<b>"</b></nobr><br>
+	<nobr>&nbsp; &nbsp; &nbsp; &nbsp; <b>"</b>http://www.forkosh.com/mimetex.html \\end{gather}}}\\\\<b>"</b></nobr><br>
+	<nobr>&nbsp; &nbsp; &nbsp; &nbsp; <b>"</b> %%expression%%<b>"</b></nobr><br>
+        <nobr>&nbsp; &nbsp; &nbsp; <b>"\\</b>end{gather}<b>"</b></nobr><br>
+       Every line in your file must be enclosed in <b>"</b>quotes<b>"</b>,
+       and all backslashes written as double-backslashes <b>\\</b>.
+       Note <b>\\\\</b> at the end of the third and fourth lines,
+       which LaTeX sees as <b>\\</b>.  The entire example shows how my
+       default advertisement is defined. <br>
+       &nbsp; &nbsp; &nbsp; Your advertisement may consist of any valid
+       mimeTeX commands you like. But it must somewhere contain the line <br>
+	<nobr>&nbsp; &nbsp; &nbsp; <b>"</b> %%expression%% <b>"</b></nobr><br>
+       which is replaced by the user's expression. <br>
+       &nbsp; &nbsp; &nbsp; Once mimeTeX is compiled with your advertisement,
+       test it by submitting an expression like &nbsp;
+       <b>\advertisement&nbsp;x^2+y^2</b> &nbsp; containing the special
+       mimeTeX &nbsp; \advertisement&nbsp;directive, &nbsp; which forces that
+       expression to be rendered with your advertisement.  In this case
+       (and with my default advertisement message) we see <br>
+       &nbsp; &nbsp; &nbsp;
+       <a href="#preview"><img id="adswitch3" onclick="eqntext('adswitch3')"
+       src="../cgi-bin/mimetex.cgi?\advertisement x^2+y^2"
+       alt="" align="middle" border=0></a> &nbsp; &nbsp; instead of
+       just &nbsp; &nbsp;
+       <a href="#preview"><img id="adswitch4" onclick="eqntext('adswitch4')"
+       src="../cgi-bin/mimetex.cgi?x^2+y^2" alt="" border=0></a> <br>
+       regardless of your ADFREQUENCY value. </dd>
      </dl>
 
 
@@ -2052,12 +2518,23 @@ and some other characters<font size=5>...</font></a> </h3>
 
 <h3> <a name="characters">Character Sets<font size=5>...</font></a> </h3>
 
- <p> For complete information about the characters and math symbols
+ <p> The <a href="http://www.ctan.org/tex-archive/info/symbols/comprehensive/"
+     target="_top"> Comprehensive&nbsp;LaTeX&nbsp;Symbol&nbsp;List </a>
+     illustrates some 6,000 symbols supported by LaTeX. For complete
+     information about the subset of these characters and math symbols
      available in mimeTeX, you'll need to browse through the bottom
-     500-or-so lines of <b>mimetex.h</b>.  And several additional
+     1500-or-so lines of <b>mimetex.h</b>.  And several additional
      symbols like <b>\ldots</b> and <b>\AA</b> and <b>\hbar</b> are
      defined by the mimeTeX preprocessor, function <b>mimeprep(&nbsp;)</b>
-     in <b>mimetex.c</b> &nbsp; &nbsp; Generally speaking, I've tried to
+     in <b>mimetex.c</b> <br>
+     &nbsp; &nbsp; &nbsp; &nbsp;
+     I haven't exhaustively checked all the name-number matchings for
+     the thousand-or-so symbols in mimetex.h.  You can eaily correct
+     any minor mistake you find in what I hope is an obvious manner.
+     The fonts <a href="#fonts">Appendix&nbsp;IVa</a> below provides
+     additional information. </p>
+
+ <p> Generally speaking, I've tried to
      encode the cmr10, cmmi10, cmmib10, cmsy10, cmex10, bbold10, rsfs10,
      stmary10 and wncyr10 families with "names", e.g., <b>\alpha \beta
      \forall \sqcup</b>, etc, identical to your LaTeX expectations.
@@ -2068,11 +2545,12 @@ and some other characters<font size=5>...</font></a> </h3>
      <b>{\cyr&nbsp;Khrushchev}</b> or <b>\cyr{Khrushchev}</b> to see
      <a href="#preview"><img id="cyrillic1" onclick="eqntext('cyrillic1')"
      src="../cgi-bin/mimetex.cgi?\large\cyr Khrushchev"
-     alt="" border=0 align=middle></a>.
+     alt="" border=0 align="middle"></a>.
      Most LaTeX distributions supply stmaryrd.dvi and stmaryrd.sty
      that both document the names of the stmary10 symbols.
      Similarly, amsfndoc.dvi documents the names of the wncyr10
      cyrillic symbols and ligatures. </p>
+
      <!-- But there are various additions and omissions and exceptions
      vis-a-vis LaTeX.  For example, </p>
       <ul>
@@ -2083,11 +2561,7 @@ and some other characters<font size=5>...</font></a> </h3>
              than their \xxx counterparts, and they automatically render
              super/subscripts in <a href="#modes">displaystyle</a>. </li>
       </ul> -->
- <p> I haven't exhaustively checked all the name-number matchings for
-     the hundreds of symbols in mimetex.h.  You can eaily correct
-     any minor mistake you find in what I hope is an obvious manner.
-     The fonts <a href="#fonts">Appendix&nbsp;IVa</a> below provides
-     additional information. </p>
+
 
  <p> In addition to extra LaTeX symbols like <b>\ldots</b>, <b>\AA</b>
      and <b>\hbar</b>, mentioned above, the mimeTeX preprocessor
@@ -2102,6 +2576,287 @@ and some other characters<font size=5>...</font></a> </h3>
      the cyrillic ligature <b>\&quot;E</b> has to be written in the
      even more cumbersome form <b>\&amp;quot;E</b> inside a query
      string. </p>
+
+ <p> Illustrated below are some of the character sets and math symbols
+     supported by mimeTeX, starting with several roman character fonts.
+     The blackboard bold font contains many characters besides
+     &nbsp; <b>a-z,A-Z</b>. &nbsp; Calligraphic and script fonts contain
+     uppercase &nbsp; <b>A-Z</b> &nbsp; only. </p>
+
+    <center><a href="#preview"><img id="roman8" onclick="eqntext('roman8')"
+    src="../cgi-bin/mimetex.cgi?\large
+    \begin{array}{|c+57|c|c|c0|c|c|c|c|c| C25 C+15} \hline
+    \large \textrm{a-z} & \small \backslash\textrm{text} &
+    \small \backslash\textrm{mathbb} & &
+    \large \textrm{A-Z} & \small \backslash\textrm{text} &
+    \small \backslash\textrm{mathbb} & \small \backslash\textrm{mathcal} &
+    \small \backslash\textrm{mathscr} \\ \hline
+    a&\text{a}&\mathbb{a}& &A&\text{A}&\mathbb{A}&\mathcal{A}&\mathscr{A}\\
+    b&\text{b}&\mathbb{b}& &B&\text{B}&\mathbb{B}&\mathcal{B}&\mathscr{B}\\
+    c&\text{c}&\mathbb{c}& &C&\text{C}&\mathbb{C}&\mathcal{C}&\mathscr{C}\\
+    d&\text{d}&\mathbb{d}& &D&\text{D}&\mathbb{D}&\mathcal{D}&\mathscr{D}\\
+    e&\text{e}&\mathbb{e}& &E&\text{E}&\mathbb{E}&\mathcal{E}&\mathscr{E}\\
+    f&\text{f}&\mathbb{f}& &F&\text{F}&\mathbb{F}&\mathcal{F}&\mathscr{F}\\
+    g&\text{g}&\mathbb{g}& &G&\text{G}&\mathbb{G}&\mathcal{G}&\mathscr{G}\\
+    h&\text{h}&\mathbb{h}& &H&\text{H}&\mathbb{H}&\mathcal{H}&\mathscr{H}\\
+    i&\text{i}&\mathbb{i}& &I&\text{I}&\mathbb{I}&\mathcal{I}&\mathscr{I}\\
+    j&\text{j}&\mathbb{j}& &J&\text{J}&\mathbb{J}&\mathcal{J}&\mathscr{J}\\
+    k&\text{k}&\mathbb{k}& &K&\text{K}&\mathbb{K}&\mathcal{K}&\mathscr{K}\\
+    l&\text{l}&\mathbb{l}& &L&\text{L}&\mathbb{L}&\mathcal{L}&\mathscr{L}\\
+    m&\text{m}&\mathbb{m}& &M&\text{M}&\mathbb{M}&\mathcal{M}&\mathscr{M}\\
+    n&\text{n}&\mathbb{n}& &N&\text{N}&\mathbb{N}&\mathcal{N}&\mathscr{N}\\
+    o&\text{o}&\mathbb{o}& &O&\text{O}&\mathbb{O}&\mathcal{O}&\mathscr{O}\\
+    p&\text{p}&\mathbb{p}& &P&\text{P}&\mathbb{P}&\mathcal{P}&\mathscr{P}\\
+    q&\text{q}&\mathbb{q}& &Q&\text{Q}&\mathbb{Q}&\mathcal{Q}&\mathscr{Q}\\
+    r&\text{r}&\mathbb{r}& &R&\text{R}&\mathbb{R}&\mathcal{R}&\mathscr{R}\\
+    s&\text{s}&\mathbb{s}& &S&\text{S}&\mathbb{S}&\mathcal{S}&\mathscr{S}\\
+    t&\text{t}&\mathbb{t}& &T&\text{T}&\mathbb{T}&\mathcal{T}&\mathscr{T}\\
+    u&\text{u}&\mathbb{u}& &U&\text{U}&\mathbb{U}&\mathcal{U}&\mathscr{U}\\
+    v&\text{v}&\mathbb{v}& &V&\text{V}&\mathbb{V}&\mathcal{V}&\mathscr{V}\\
+    w&\text{w}&\mathbb{w}& &W&\text{W}&\mathbb{W}&\mathcal{W}&\mathscr{W}\\
+    x&\text{x}&\mathbb{x}& &X&\text{X}&\mathbb{X}&\mathcal{X}&\mathscr{X}\\
+    y&\text{y}&\mathbb{y}& &Y&\text{Y}&\mathbb{Y}&\mathcal{Y}&\mathscr{Y}\\
+    z&\text{z}&\mathbb{z}& &Z&\text{Z}&\mathbb{Z}&\mathcal{Z}&\mathscr{Z}\\
+    \hline \end{array}"
+    alt="" border=0 align="middle"></a></center>
+
+ <p> Characters from the Greek alphabet supported by mimeTeX,
+     along with &nbsp; <b>\mathbb{&nbsp;}</b> &nbsp; versions, are
+     illustrated next.  For example, &nbsp; <b>\mathbb{\lambda}</b>
+     &nbsp; renders &nbsp;
+     <a href="#preview"><img id="bblambda" onclick="eqntext('bblambda')"
+     src="../cgi-bin/mimetex.cgi?\large\mathbb{\lambda}"
+     alt="" border=0 align="bottom"></a>. </p>
+
+    <center><a href="#preview"><img id="greek2" onclick="eqntext('greek2')"
+    src="../cgi-bin/mimetex.cgi?\large
+    \begin{array}{|l98c28c28|l98c28c28|l98c28c28|}
+    \hline \; \\
+    \hspace{10}\backslash\textrm{Gamma}      & \Gamma   & \mathbb{\Gamma}  &
+    \hspace{10}\backslash\textrm{Delta}      & \Delta   & \mathbb{\Delta}  &
+    \hspace{10}\backslash\textrm{Theta}      & \Theta   & \mathbb{\Theta}  \\
+    \hspace{10}\backslash\textrm{Lambda}     & \Lambda  & \mathbb{\Lambda} &
+    \hspace{10}\backslash\textrm{Xi}         & \Xi      & \mathbb{\Xi}     &
+    \hspace{10}\backslash\textrm{Pi}         & \Pi      & \mathbb{\Pi}     \\
+    \hspace{10}\backslash\textrm{Sigma}      & \Sigma   & \mathbb{\Sigma}  &
+    \hspace{10}\backslash\textrm{Upsilon}    & \Upsilon & \mathbb{\Upsilon}&
+    \hspace{10}\backslash\textrm{Phi}        & \Phi     & \mathbb{\Phi}    \\
+    \hspace{10}\backslash\textrm{Psi}        & \Psi     & \mathbb{\Psi}    &
+    \hspace{10}\backslash\textrm{Omega}      & \Omega   & \mathbb{\Omega}  \\
+    \; \\ \hline \; \\
+    \hspace{10}\backslash\textrm{alpha}      & \alpha   & \mathbb{\alpha}  &
+    \hspace{10}\backslash\textrm{beta}       & \beta    & \mathbb{\beta}   &
+    \hspace{10}\backslash\textrm{gamma}      & \gamma   & \mathbb{\gamma}  \\
+    \hspace{10}\backslash\textrm{delta}      & \delta   & \mathbb{\delta}  &
+    \hspace{10}\backslash\textrm{epsilon}    & \epsilon & \mathbb{\epsilon}&
+    \hspace{10}\backslash\textrm{zeta}       & \zeta    & \mathbb{\zeta}   \\
+    \hspace{10}\backslash\textrm{eta}        & \eta     & \mathbb{\eta}    &
+    \hspace{10}\backslash\textrm{theta}      & \theta   & \mathbb{\theta}  &
+    \hspace{10}\backslash\textrm{iota}       & \iota    & \mathbb{\iota}   \\
+    \hspace{10}\backslash\textrm{kappa}      & \kappa   & \mathbb{\kappa}  &
+    \hspace{10}\backslash\textrm{lambda}     & \lambda  & \mathbb{\lambda} &
+    \hspace{10}\backslash\textrm{mu}         & \mu      & \mathbb{\mu}     \\
+    \hspace{10}\backslash\textrm{nu}         & \nu      & \mathbb{\nu}     &
+    \hspace{10}\backslash\textrm{xi}         & \xi      & \mathbb{\xi}     &
+    \hspace{10}\backslash\textrm{pi}         & \pi      & \mathbb{\pi}     \\
+    \hspace{10}\backslash\textrm{rho}        & \rho     & \mathbb{\rho}    &
+    \hspace{10}\backslash\textrm{sigma}      & \sigma   & \mathbb{\sigma}  &
+    \hspace{10}\backslash\textrm{tau}        & \tau     & \mathbb{\tau}    \\
+    \hspace{10}\backslash\textrm{upsilon}    & \upsilon & \mathbb{\upsilon}&
+    \hspace{10}\backslash\textrm{phi}        & \phi     & \mathbb{\phi}    &
+    \hspace{10}\backslash\textrm{chi}        & \chi     & \mathbb{\chi}    \\
+    \hspace{10}\backslash\textrm{psi}        & \psi     & \mathbb{\psi}    &
+    \hspace{10}\backslash\textrm{omega}      & \omega   & \mathbb{\omega}  \\
+    \; \\ \hline \; \\
+    \hspace{10}\backslash\textrm{varepsilon} & \varepsilon & &
+    \hspace{10}\backslash\textrm{vartheta}   & \vartheta   & &
+    \hspace{10}\backslash\textrm{varpi}      & \varpi      & \\
+    \hspace{10}\backslash\textrm{varrho}     & \varrho     & &
+    \hspace{10}\backslash\textrm{varsigma}   & \varsigma   & &
+    \hspace{10}\backslash\textrm{varphi}     & \varphi     & \\
+    \; \\ \hline
+    \end{array}"
+    alt="" border=0 align="middle"></a></center>
+
+ <p> Finally, some of the math symbols supported by mimeTeX are illustrated
+     below. Operators shown in two sizes are automatically
+     "promoted" to the larger size in &nbsp <b>\displaystyle</b>
+     &nbsp; mode.  For example, &nbsp;
+     <b>f(x)=\int_{-\infty}^x&nbsp;e^{-t^2}dt</b> &nbsp; renders &nbsp;
+     <a href="#preview"><img id="mathsy1" onclick="eqntext('mathsy1')"
+     src="../cgi-bin/mimetex.cgi?\textstyle f(x)=\int_{-\infty}^x e^{-t^2}dt"
+     alt="" border=0 align="middle"></a>
+     &nbsp; whereas &nbsp;
+     <b>\displaystyle&nbsp;f(x)=\int_{-\infty}^x&nbsp;e^{-t^2}dt</b>
+     &nbsp; renders &nbsp;
+     <a href="#preview"><img id="mathsy2" onclick="eqntext('mathsy2')"
+     src="../cgi-bin/mimetex.cgi?\displaystyle
+     f(x)=\int_{-\infty}^x e^{-t^2}dt" alt="" border=0 align="middle"></a>
+     </p>
+
+    <center><a href="#preview"><img id="mthtbl1" onclick="eqntext('mthtbl1')"
+    src="../cgi-bin/mimetex.cgi?\large\textstyle
+    \begin{array}{|l98c28c28|l98c28c28|l98c28c28|}
+    \hline \; \\
+    \hspace{10}\backslash\textrm{cdot}       & \cdot       &  &
+    \hspace{10}\backslash\textrm{times}      & \times      &  &
+    \hspace{10}\backslash\textrm{ast}        & \ast        &  \\
+    \hspace{10}\backslash\textrm{div}        & \div        &  &
+    \hspace{10}\backslash\textrm{diamond}    & \diamond    &  &
+    \hspace{10}\backslash\textrm{pm}         & \pm         &  \\
+    \hspace{10}\backslash\textrm{mp}         & \mp         &  &
+    \hspace{10}\backslash\textrm{oplus}      & \oplus      & \Bigoplus &
+    \hspace{10}\backslash\textrm{ominus}     & \ominus     &  \\
+    \hspace{10}\backslash\textrm{otimes}     & \otimes     & \Bigotimes &
+    \hspace{10}\backslash\textrm{oslash}     & \oslash     &  &
+    \hspace{10}\backslash\textrm{odot}       & \odot       & \Bigodot \\
+    \hspace{10}\backslash\textrm{bigcirc}    & \bigcirc    &  &
+    \hspace{10}\backslash\textrm{circ}       & \circ       &  &
+    \hspace{10}\backslash\textrm{bullet}     & \bullet     &  \\
+    \hspace{10}\backslash\textrm{asymp}      & \asymp      &  &
+    \hspace{10}\backslash\textrm{equiv}      & \equiv      &  &
+    \hspace{10}\backslash\textrm{subseteq}   & \subseteq   &  \\
+    \hspace{10}\backslash\textrm{supseteq}   & \supseteq   &  &
+    \hspace{10}\backslash\textrm{leq}        & \leq        &  &
+    \hspace{10}\backslash\textrm{geq}        & \geq        &  \\
+    \hspace{10}\backslash\textrm{preceq}     & \preceq     &  &
+    \hspace{10}\backslash\textrm{succeq}     & \succeq     &  &
+    \hspace{10}\backslash\textrm{sim}        & \sim        &  \\
+    \hspace{10}\backslash\textrm{approx}     & \approx     &  &
+    \hspace{10}\backslash\textrm{subset}     & \subset     &  &
+    \hspace{10}\backslash\textrm{supset}     & \supset     &  \\
+    \hspace{10}\backslash\textrm{ll}         & \ll         &  &
+    \hspace{10}\backslash\textrm{gg}         & \gg         &  &
+    \hspace{10}\backslash\textrm{prec}       & \prec       &  \\
+    \hspace{10}\backslash\textrm{succ}       & \succ       &  &
+    \hspace{10}\normalsize\backslash\textrm{leftarrow}  & \leftarrow  &  &
+    \hspace{10}\normalsize\backslash\textrm{rightarrow} & \rightarrow &  \\
+    \hspace{10}\normalsize\backslash\textrm{uparrow}    & \uparrow    &  &
+    \hspace{10}\normalsize\backslash\textrm{downarrow}  & \downarrow  &  &
+    \hspace{10}\normalsize\backslash\textrm{leftrightarrow}&&\leftrightarrow\\
+    \hspace{10}\backslash\textrm{nearrow}    & \nearrow    &  &
+    \hspace{10}\backslash\textrm{searrow}    & \searrow    &  &
+    \hspace{10}\backslash\textrm{simeq}      & \simeq      &  \\
+    \hspace{10}\normalsize\backslash\textrm{Leftarrow}  & \Leftarrow  &  &
+    \hspace{10}\normalsize\backslash\textrm{Rightarrow} & \Rightarrow &  &
+    \hspace{10}\normalsize\backslash\textrm{Uparrow}    & \Uparrow    &  \\
+    \hspace{10}\normalsize\backslash\textrm{Downarrow}  & \Downarrow  &  &
+    \hspace{10}\normalsize\backslash\textrm{Leftrightarrow}&&\Leftrightarrow&
+    \hspace{10}\backslash\textrm{nwarrow}    & \nwarrow    &  \\
+    \hspace{10}\backslash\textrm{swarrow}    & \swarrow    &  &
+    \hspace{10}\backslash\textrm{propto}     & \propto     &  &
+    \hspace{10}\backslash\textrm{prime}      & \prime      &  \\
+    \hspace{10}\backslash\textrm{infty}      & \infty      &  &
+    \hspace{10}\backslash\textrm{in}         & \in         &  &
+    \hspace{10}\backslash\textrm{ni}         & \ni         &  \\
+    \hspace{10}\backslash\textrm{triangle}   & \triangle   &  &
+    \hspace{10}\normalsize\backslash\textrm{bigtriangledown}&&\bigtriangledown&
+    \hspace{10}\backslash^\prime             & \'          &  \\
+    \hspace{10}\textrm{/}                    & /           &  &
+    \hspace{10}\backslash\textrm{forall}     & \forall     &  &
+    \hspace{10}\backslash\textrm{exists}     & \exists     &  \\
+    \hspace{10}\backslash\textrm{neg}        & \neg        &  &
+    \hspace{10}\backslash\textrm{emptyset}   & \emptyset   &  &
+    \hspace{10}\backslash\textrm{Re}         & \Re         &  \\
+    \hspace{10}\backslash\textrm{Im}         & \Im         &  &
+    \hspace{10}\backslash\textrm{top}        & \top        &  &
+    \hspace{10}\backslash\textrm{bot}        & \bot        &  \\
+    \hspace{10}\backslash\textrm{aleph}      & \aleph      &  &
+    \hspace{10}\normalsize\backslash\textrm{mathcal\lbrace A\rbrace}&\;\mathcal{A}&....&
+    ....       \normalsize\backslash\textrm{mathcal\lbrace Z\rbrace}&\;\mathcal{Z}&\\
+    \; \\ \hline
+    \end{array}"
+    alt="" border=0 align="middle"></a><br>
+    <a href="#preview"><img id="mthtbl2" onclick="eqntext('mthtbl2')"
+    src="../cgi-bin/mimetex.cgi?\large\textstyle
+    \begin{array}{|l98c28c28|l98c28c28|l98c28c28|}
+    \hline \; \\
+    \hspace{10}\backslash\textrm{cup}        & \cup        & \Bigcup &
+    \hspace{10}\backslash\textrm{cap}        & \cap        & \Bigcap &
+    \hspace{10}\backslash\textrm{uplus}      & \uplus      & \Biguplus \\
+    \hspace{10}\backslash\textrm{wedge}      & \wedge      & \Bigwedge &
+    \hspace{10}\backslash\textrm{vee}        & \vee        & \Bigvee &
+    \hspace{10}\backslash\textrm{vdash}      & \vdash      &  \\
+    \hspace{10}\backslash\textrm{dashv}      & \dashv      &  &
+    \hspace{10}\backslash\textrm{lfloor}     & \lfloor     &  &
+    \hspace{10}\backslash\textrm{rfloor}     & \rfloor     &  \\
+    \hspace{10}\backslash\textrm{lceil}      & \lceil      &  &
+    \hspace{10}\backslash\textrm{rceil}      & \rceil      &  &
+    \hspace{10}\backslash\textrm{lbrace}     & \lbrace     &  \\
+    \hspace{10}\backslash\textrm{rbrace}     & \rbrace     &  &
+    \hspace{10}\backslash\textrm{langle}     & \langle     &  &
+    \hspace{10}\backslash\textrm{rangle}     & \rangle     &  \\
+    \hspace{10}\backslash\textrm{mid}        & \mid        &  &
+    \hspace{10}\backslash\textrm{parallel}   & \parallel   &  &
+    \hspace{10}\normalsize\backslash\textrm{updownarrow}& & \updownarrow \\
+    \hspace{10}\normalsize\backslash\textrm{Updownarrow}& & \Updownarrow &
+    \hspace{10}\backslash\textrm{setminus}   & \setminus   &  &
+    \hspace{10}\backslash\textrm{wr}         & \wr         &  \\
+    \hspace{10}\backslash\textrm{surd}       & \raisebox{15}\surd &  &
+    \hspace{10}\backslash\textrm{amalg}      & \amalg      &  &
+    \hspace{10}\backslash\textrm{nabla}      & \nabla      &  \\
+    \hspace{10}\backslash\textrm{int}        & \int        & \Bigint &
+    \hspace{10}\backslash\textrm{sqcup}      & \sqcup      & \Bigsqcup &
+    \hspace{10}\backslash\textrm{sqcap}      & \sqcap      &  \\
+    \hspace{10}\normalsize\backslash\textrm{sqsubseteq} & \sqsubseteq &  &
+    \hspace{10}\normalsize\backslash\textrm{sqsupseteq} & \sqsupseteq &  &
+    \hspace{10}\backslash\textrm{S}          & \S          &  \\
+    \hspace{10}\backslash\textrm{dag}        & \dag        &  &
+    \hspace{10}\backslash\textrm{ddag}       & \ddag       &  &
+    \hspace{10}\backslash\textrm{P}          & \P          &  \\
+    \hspace{10}\backslash\textrm{clubsuit}   & \clubsuit   &  &
+    \hspace{10}\backslash\textrm{Diamond}    & \Diamond    &  &
+    \hspace{10}\backslash\textrm{Heart}      & \Heart      &  \\
+    \hspace{10}\backslash\textrm{spadesuit}  & \spadesuit  &  \\
+    \; \\ \hline
+    \end{array}"
+    alt="" border=0 align="middle"></a><br>
+    <a href="#preview"><img id="mthtbl3" onclick="eqntext('mthtbl3')"
+    src="../cgi-bin/mimetex.cgi?\large\textstyle
+    \begin{array}{|l98c28c28|l98c28c28|l98c28c28|}
+    \hline \; \\
+    \hspace{10}\backslash\textrm{oint}       & \oint       & \Bigoint &
+    \hspace{10}\backslash\textrm{sum}        & \sum        & \Bigsum &
+    \hspace{10}\backslash\textrm{prod}       & \prod       & \Bigprod \\
+    \hspace{10}\backslash\textrm{coprod}     & \coprod     & \Bigcoprod \\
+    \; \\ \hline \; \\
+    \hspace{10}\normalsize\backslash\textrm{leftharpoonup} &&\leftharpoonup&
+       \normalsize\backslash\textrm{leftharpoondown} &&\;\leftharpoondown&
+    \hspace{10}\normalsize\backslash\textrm{rightharpoonup}&&\rightharpoonup\\
+       \normalsize\backslash\textrm{rightharpoondown}&&\;\rightharpoondown&
+    \hspace{10}\normalsize\backslash\textrm{triangleright} &&\triangleright&
+    \hspace{10}\normalsize\backslash\textrm{triangleleft}  &&\triangleleft\\
+       \normalsize\backslash\textrm{rightleftharpoons}&&\;\rightleftharpoons&
+    \hspace{10}\backslash\textrm{star}       & \LARGE{\star} &  &
+    \hspace{10}\backslash\textrm{partial}    & \partial    &  \\
+    \hspace{10}\backslash\textrm{flat}       & \flat       &  &
+    \hspace{10}\backslash\textrm{natural}    & \natural    &  &
+    \hspace{10}\backslash\textrm{sharp}      & \sharp      &  \\
+    \hspace{10}\backslash\textrm{smile}      & \smile      &  &
+    \hspace{10}\backslash\textrm{frown}      & \frown      &  &
+    \hspace{10}\backslash\textrm{ell}        & \ell        &  \\
+    \hspace{10}\backslash\textrm{imath}      & \imath      &  &
+    \hspace{10}\backslash\textrm{jmath}      & \jmath      &  &
+    \hspace{10}\backslash\textrm{wp}         & \wp         &  \\
+    \; \\ \hline \; \\
+    \hspace{10}\backslash\textrm{ss}         & \ss         &  &
+    \hspace{10}\backslash\textrm{ae}         & \ae         &  &
+    \hspace{10}\backslash\textrm{oe}         & \oe         &  \\
+    \hspace{10}\backslash\textrm{AE}         & \AE         &  &
+    \hspace{10}\backslash\textrm{OE}         & \OE         &  \\
+    \; \\ \hline \; \\
+    \hspace{10}\backslash\textrm{AA}         & \AA         &  &
+    \hspace{10}\backslash\textrm{aa}         & \aa         &  &
+    \hspace{10}\backslash\textrm{hbar}       & \hbar       &  \\
+    \hspace{10}\backslash\textrm{ldots}      & \ldots      &  &
+    \hspace{10}\backslash\textrm{cdots}      & \cdots      &  &
+    \hspace{10}\backslash\textrm{vdots}      & \vdots      &  \\
+    \hspace{10}\backslash\textrm{ddots}      & \ddots      &  &
+    \hspace{10}\backslash\textrm{angle}      & \angle      &  &
+    \hspace{10}\backslash\textrm{iint}       & \iint       & \Bigiint \\
+    \; \\ \hline
+    \end{array}"
+    alt="" border=0 align="middle"></a></center>
 
 <h3> <a name="sizes">Font Sizes<font size=5>...</font></a> </h3>
 
@@ -2218,6 +2973,105 @@ and some other characters<font size=5>...</font></a> </h3>
      resulting in font size 2.   And the final <b>"2"</b> is rendered,
      by the usual rules, one size smaller than the <b>"x"</b>,
      in font size&nbsp;1. </p>
+
+ <p> Finally, illustrated below are some examples of fonts and symbols
+     at several mimeTeX sizes.  All symbols and sizes from cmr, cmmi,
+     cmmib (use <b>\mathbf{&nbsp;}</b>), cmsy, cmex, bbold (use
+     <b>\mathbb{&nbsp;}</b>), rsfs (use <b>\mathscr{&nbsp;}</b>),
+     stmary and cyrillic wncyr (use <b>{\cyr&nbsp;&nbsp;}</b> or
+     <b>\cyr{&nbsp;}</b>) should be available, but they're not all shown.
+     <!-- And also not shown are various "constructed symbols" like \sqrt,
+     accents, etc. --> The illustrated font sizes are numbered 4=\Large,
+     3=\large and 2=\normalsize (not shown are 7=\Huge, 6=\huge,
+     5=\LARGE, 1=\small and 0=\tiny). </p>
+
+ <center> <table cellspacing="7">
+  <tr> <td align="left">
+<font size="4">cmmi latin uppercase, and lowercase</font>
+<br><img src="../cgi-bin/mimetex.cgi?\array{r$
+2$\rm~size~4:~&4$A&4$B&4$C&4$D,&4$a&4$b&4$c&4$d\\
+2$\rm~3:~&3$E&3$F&3$G&3$H&3$I&3$J&3$K&3$L,&3$e&3$f&3$g&3$h&3$i&3$j&3$k&3$l\\
+2$\rm~2:~&2$M&2$N&2$O&2$P&2$Q&2$R&2$S&2$T&2$U&2$V&2$W&2$X&2$Y&2$Z,&
+2$m&2$n&2$o&2$p&2$q&2$r&2$s&2$t&2$u&2$v&2$w&2$x&2$y&2$z}"
+alt="" border=0 align=middle>
+  </td> <tr>
+  <tr> <td align="left">
+<font size="4">calligraphic, and rsfs (<b>\cal{A}, \scr{B}, etc</b>)</font>
+<br><img src="../cgi-bin/mimetex.cgi?\array{r$
+2$\rm~size~4:~&4$\calA&4$\calB&4$\calC&4$\calD&4$\calE&4$\calF&4$\calG,&
+4$\scrA&4$\scrB&4$\scrC&4$\scrD&4$\scrE&4$\scrF&4$\scrG\\
+2$\rm~3:~&3$\calH&3$\calI&3$\calJ&3$\calK&3$\calL&3$\calM&3$\calN&3$\calO&
+3$\calP,&
+3$\scrH&3$\scrI&3$\scrJ&3$\scrK&3$\scrL&3$\scrM&3$\scrN&3$\scrO&3$\scrP\\
+2$\rm~2:~&2$\calQ&2$\calR&2$\calS&2$\calT&2$\calU&
+2$\calV&2$\calW&2$\calX&2$\calY&2$\calZ,&
+2$\scrQ&2$\scrR&2$\scrS&2$\scrT&2$\scrU&2$\scrV&2$\scrW&
+2$\scrX&2$\scrY&2$\scrZ}"
+alt="" border=0 align=middle>
+  </td> <tr>
+  <tr> <td align="left">
+<font size="4">cmmi greek uppercase, and \var lowercase</font>
+<br><img src="../cgi-bin/mimetex.cgi?\array{r$
+2$\rm~size~4:~&4$\Gamma&4$\Delta&4$\Theta&4$\Lambda&4$\Xi&4$\Pi&4$\Sigma&
+4$\Upsilon&4$\Phi&4$\Psi&4$\Omega,&4$\rm~~&4$\varepsilon&4$\vartheta&4$\varpi&
+4$\varrho&4$\varsigma&4$\varphi\\
+2$\rm~3:~&3$\Gamma&3$\Delta&3$\Theta&3$\Lambda&3$\Xi&3$\Pi&3$\Sigma&
+3$\Upsilon&3$\Phi&3$\Psi&3$\Omega,&~&3$\varepsilon&3$\vartheta&3$\varpi&
+3$\varrho&3$\varsigma&3$\varphi\\
+2$\rm~2:~&2$\Gamma&2$\Delta&2$\Theta&2$\Lambda&2$\Xi&2$\Pi&2$\Sigma&
+2$\Upsilon&2$\Phi&2$\Psi&2$\Omega,&~&2$\varepsilon&2$\vartheta&2$\varpi&
+2$\varrho&2$\varsigma&2$\varphi}"
+alt="" border=0 align=middle>
+  </td> <tr>
+  <tr> <td align="left">
+<font size="4">cmmi greek lowercase</font>
+<br><img src="../cgi-bin/mimetex.cgi?\array{r$
+2$\rm~size~4:~&4$\alpha&4$\beta&4$\gamma&4$\delta&4$\epsilon&4$\zeta&
+4$\eta&4$\theta&4$\iota&4$\kappa&4$\lambda&4$\mu&4$\nu&4$\xi&4$%%\omicron%%&
+4$\pi&4$\rho&4$\sigma&4$\tau&4$\upsilon&4$\phi&4$\chi&4$\psi&4$\omega\\
+2$\rm~3:~&3$\alpha&3$\beta&3$\gamma&3$\delta&3$\epsilon&3$\zeta&
+3$\eta&3$\theta&3$\iota&3$\kappa&3$\lambda&3$\mu&3$\nu&3$\xi&3$%%\omicron%%&
+3$\pi&3$\rho&3$\sigma&3$\tau&3$\upsilon&3$\phi&3$\chi&3$\psi&3$\omega\\
+2$\rm~2:~&2$\alpha&2$\beta&2$\gamma&2$\delta&2$\epsilon&2$\zeta&
+2$\eta&2$\theta&2$\iota&2$\kappa&2$\lambda&2$\mu&2$\nu&2$\xi&2$%%\omicron%%&
+2$\pi&2$\rho&2$\sigma&2$\tau&2$\upsilon&2$\phi&2$\chi&2$\psi&2$\omega}"
+alt="" border=0 align=middle>
+  </td> <tr>
+  <tr> <td align="left">
+<font size="4">cmsy symbols at mimeTeX font size 3</font><br>
+<font size="3">(operators shown large are automatically "promoted"<br>
+to the larger size in \displaystyle mode)</font>
+<br><img src="../cgi-bin/mimetex.cgi?\array{3,r$1$\rm~chars~\\
+1$\rm~0-15:~&-&\cdot&\times&\ast&\div&\diamond&\pm&\mp&
+\oplus&\ominus&\otimes&\oslash&\odot&\bigcirc&\circ&\bullet\\
+1$\rm~16-31:~&\asymp&\equiv&\subseteq&\supseteq&\leq&\geq&\preceq&\succeq&
+\sim&\approx&\subset&\supset&\ll&\gg&\prec&\succ\\
+1$\rm~32-47:~&\leftar&\rightar&\uparr&\downar&\leftrightar&\near&\sear&
+\simeq&\Leftar&\Rightar&\Upar&\Downar&\Leftrightar&\nwar&\swar&\propto\\
+1$\rm~48-63:~&\prime&\infty&\in&\ni&\triangle&\bigtriangledo&/&\'&
+\forall&\exists&\neg&\emptyset&\Re&\Im&\top&\bot\\
+1$\rm~64-100:~&\aleph&&\calA&4$.\,.\,.&\calZ&&\cup&\cap&
+\uplus&\wedge&\vee&\vdash&\dashv&\lfloor&\rfloor&\lceil\\
+1$\rm~101-116:~&\rceil&\lbrace&\rbrace&\langle&\rangle&\mid&\parallel&
+\updownar&\Updownar&\setminus&\wr&\surd&\amalg&\nabla&\int&\sqcup\\
+1$\rm~117-127:~&\sqcap&\sqsubseteq&\sqsupseteq&\S&\dag&\ddag&\P&\clubsuit&
+\Diamond&\Heart&\spadesuit}" alt="" border=0 align=middle>
+  </td> <tr>
+  <tr> <td align="left">
+<font size="4">a few other cmmi, cmr, stmary and wncyr symbols
+at mimeTeX font size 4</font>
+<br><img src="../cgi-bin/mimetex.cgi?\array{4,r$
+1$\rm~cmmi:~&\leftharpoonup&\leftharpoondo&\rightharpoonup&\rightharpoondo&
+\triangleright&\triangleleft&\star&\partial&
+\flat&\natural&\sharp&\smile&\frown&\ell&\imath&\jmath&\wp&\vec\\
+1$\rm~cmr:~&\ss&\ae&\oe&\AE&\OE \\
+1$\rm~stmary:~&\moo&\Lbag&\Rbag&\lightning&\llbracket&\rrbracket&
+\subsetpluseq&\supsetpluseq&\Yup&\Ydown\\
+1$\rm~wncyr:~&\cyr A&\cyr a&\cyr B&\cyr b&\cyr V&\cyr v&\cyr G&\cyr g&
+\cyr D&\cyr d&\cyr Dj&\cyr dj&\cyr\=E&\cyr\=e&\cyr Zh&\cyr zh}"
+alt="" border=0 align=middle>
+  </td> <tr>
+ </table> </center>
 
 <h3> <a name="modes">Modes<font size=5>...</font></a> </h3>
 
@@ -2736,7 +3590,7 @@ Raise&nbsp;and&nbsp;rotate, Compose, Abbreviations, etc. &nbsp; </a> </h2>
         <a href="#preview"><img id="raiserot2" onclick="eqntext('raiserot2')"
         src="../cgi-bin/mimetex.cgi?
         \large\rm abc\raiseb{-2}{\reflectb[2]{\LARGE?}}def"
-        alt="" border=0 align=middle></a> </center>
+        alt="" border=0 align="bottom"></a> </center>
 
 <h3> <a name="compose">\compose{&nbsp;}{&nbsp;}<font size=5>...</font></a></h3>
 
@@ -2744,20 +3598,63 @@ Raise&nbsp;and&nbsp;rotate, Compose, Abbreviations, etc. &nbsp; </a> </h2>
      <b>\compose[<i>offset</i>]{<i>base</i>}{<i>overlay</i>}</b>
      superimposes the <b><i>overlay</i></b> expression on top of the
      <b><i>base</i></b> expression, displaying the result.
-     Optionally, the overlay is horizontally <b><i>offset</i></b>
-     by the specified number of pixels (positive offsets to the right,
-     negative to the left). For example, </p> <center>
-        <b>\compose{\LARGE O}{\normalsize c}</b> &nbsp; produces &nbsp;
+     The superimposed <b><i>overlay</i></b> is centered, both
+     horizontally and vertically, on the <b><i>base</i></b> image,
+     with the composite image baseline
+     <!-- the same as the <b><i>base</i></b>. -->
+     completely ignored.
+     That means the <b><i>base</i></b> remains positioned in your expression
+     just as if it had been rendered alone, while the <b><i>overlay</i></b>
+     is moved around, vertically as well as horizontally, to accommodate it.
+     For example, </p> <center>
+        <b>\compose{\LARGE O}{\normalsize c}</b> &nbsp; renders &nbsp;
         <a href="#preview"><img id="compose1" onclick="eqntext('compose1')"
         src="../cgi-bin/mimetex.cgi?\compose{\LARGE O}{\normalsize c}"
-        alt="" border=0 align=middle></a> </center>
+        alt="" border=0 align="bottom"></a> </center>
+
+ <p> Optionally, the <b><i>overlay</i></b> is horizontally
+     <b><i>offset</i></b> by the specified number of pixels
+     (positive offsets to the right, negative to the left).
+     For example, </p> <center>
+        <b>\compose[-4]{\LARGE O}{\normalsize c}</b> &nbsp; renders &nbsp;
+        <a href="#preview"><img id="compose2" onclick="eqntext('compose2')"
+        src="../cgi-bin/mimetex.cgi?\compose[-4]{\LARGE O}{\normalsize c}"
+        alt="" border=0 align="bottom"></a> </center>
+
+ <p> Vertical offset can be obtained using a <b>\raisebox</b>
+     in either the <b><i>base</i></b> or <b><i>overlay</i></b>
+     expression, or in both. (Although, note that 
+     <b>\compose{\raisebox{10}{<i>base</i>}}{<i>overlay</i>}</b>
+     renders identically to
+     <b>\raisebox{10}{\compose{<i>base</i>}{<i>overlay</i>}}</b>,
+     so applying <b>\raisebox</b> to the <b><i>base</i></b>
+     expression is typically unnecessary.)
+     Vertical <b><i>overlay</i></b> offset is relative to the
+     centered image, as discussed immediately above,
+     i.e.,&nbsp;<b>\compose{<i>base</i>}{\raisebox{0}{<i>overlay</i>}}</b>
+     has no effect at all, and the <b><i>overlay</i></b> image
+     remains centered on the <b><i>base</i></b>.
+     For example, </p> <center>
+        <b>abc\compose{\LARGE O}{\raisebox{5}{\normalsize c}}def</b>
+        &nbsp; renders &nbsp;
+        <a href="#preview"><img id="compose3" onclick="eqntext('compose3')"
+        src="../cgi-bin/mimetex.cgi?
+        abc\compose{\LARGE O}{\raisebox{5}{\normalsize c}}def"
+        alt="" border=0 align="bottom"></a>, and <br>
+        <b>abc\compose{\raisebox{10}{\LARGE O}}{\raisebox{-20}{\normalsize c}}def</b>
+        &nbsp; renders &nbsp;
+        <a href="#preview"><img id="compose3" onclick="eqntext('compose3')"
+        src="../cgi-bin/mimetex.cgi?abc
+        \compose{\raisebox{10}{\LARGE O}}{\raisebox{-20}{\normalsize c}}def"
+        alt="" border=0 align="bottom"></a></center>
 
  <p> Separately or in some judicious combination, <b>\compose</b> and
-     <b>\raisebox</b> and <b>\rotatebox</b> and <b>\reflectbox</b>
-     should help you construct special symbols not "natively" available
-     with mimeTeX's limited set of built-in font families.
-     This can be especially useful in conjunction with the
-     <b>-DNEWCOMMANDS</b> compile-time
+     <b>\raisebox</b> and <b>\rotatebox</b> and <b>\reflectbox</b>,
+     discussed above, perhaps along with <b>\rule</b> and <b>\eval</b>
+     discussed immediately below, may help you construct special symbols
+     not "natively" available with mimeTeX's limited set of built-in font
+     families. This can be especially useful in conjunction with the
+     <a href="#newcommands">&#150;DNEWCOMMANDS</a> compile-time
      <a href="#options">option</a> discussed above. </p>
 
 <h3> <a name="rule">\rule{&nbsp;}{&nbsp;}<font size=5>...</font></a></h3>
@@ -2786,6 +3683,166 @@ Raise&nbsp;and&nbsp;rotate, Compose, Abbreviations, etc. &nbsp; </a> </h2>
         <a href="#preview"><img id="rule3" onclick="eqntext('rule3')"
         src="../cgi-bin/mimetex.cgi?\frac12xyz\rule[-15]{10}{20}ghi"
         alt="" border=0 align=middle></a> </center>
+
+<h3> <a name="evaluate">\eval{&nbsp;}<font size=5>...</font></a> </h3>
+
+ <p class="continue"> mimeTeX can evaluate arithmetic expressions,
+     which is a feature intended primarily for use in
+     <a href="#newcommands">\newcommand's</a> discussed above.
+     Expressions can be built up from the following elements </p>
+     <ul>
+       <li> digits &nbsp; <b>0</b>-<b>9</b>
+         &nbsp; and numbers composed of uninterrupted (no whitespace)
+         sequences of digits, </li>
+       <li> binary operators &nbsp;
+         <b>+</b>,&nbsp;<b>-</b>,&nbsp;<b>*</b>,&nbsp;<b>/</b>,&nbsp;<b>%</b>
+         &nbsp; (<b>+</b>&nbsp;and&nbsp;<b>-</b> can be unary, preceding
+         the first number in an expression, and&nbsp;<b>%</b>&nbsp;is
+         the modulo operator), </li>
+       <li> balanced &nbsp; <b>(</b>&nbsp;...&nbsp;<b>)</b>
+         &nbsp; parentheses nested to any level (see below), </li>
+       <li> whitespace anywhere
+         (except between digits comprising a number), </li>
+       <li> One additional construction interpreted by <b>\eval{&nbsp;}</b>
+         is similar to (but not identical to) the
+         <a href="http://wikipedia.org/wiki/Conditional_(programming)#As_a_ternary_operator"
+         target="_top">?:&nbsp;conditional</a>, as follows.
+         The expression <b>(i?v0:v1:v2:<i>etc</i>)</b>, usually
+         parenthesized as illustrated, evaluates to <b>v0</b>
+         if <b>i</b> evaluates to <b>0</b>, or evaluates to <b>v1</b>
+         if <b>i</b> evaluates to <b>1</b>, etc. If <b>i&nbsp;&lt;&nbsp;0</b>
+         then <b>v0</b> is used, and if <b>i</b> is too large, the last
+         <b>v</b> is used. All components, <b>i</b> and all <b>v</b>'s,
+         can themselves be expressions, even another
+         <b>(i?v0:v1:v2:<i>etc</i>)</b>, which in this case must be
+         parenthesized. The only situation where parentheses aren't
+         required is when <b>i?v0:v1:v2:<i>etc</i></b> comprises
+         your entire expression.
+         For example, <br> <nobr>&nbsp; &nbsp; &nbsp;
+           <b>\eval{1+2?10:11:12:13:14:15}</b> renders
+          <a href="#preview"><img id="eval1" onclick="eqntext('eval1')"
+          src="../cgi-bin/mimetex.cgi?\large\eval{1+2?10:11:12:13:14:15}"
+          alt="" border=0 align=bottom></a></nobr></li>
+       <li> and <u>&nbsp;most&nbsp;importantly,&nbsp;</u>
+           the built-in variables<br>
+           &nbsp; &nbsp; &nbsp; <b>fs</b> for current fontsize and<br>
+           &nbsp; &nbsp; &nbsp; <b>unitlength</b> for unitlength<br>
+         which provide the capability for useful constructions,
+         as follows... </li>
+     </ul>
+
+ <p> All optional <b>[</b>&nbsp;<b>]</b> and mandatory
+     <b>{</b>&nbsp;<b>}</b> numeric arguments for &nbsp;
+     <a href="#rule">\rule[lift]{width}{height}</a>, &nbsp;
+     <a href="#compose">\compose[offset]{&nbsp;}{&nbsp;}</a>, &nbsp;
+     <a href="#raiserotate">\raisebox{height}{&nbsp;}</a>, &nbsp;
+     <a href="#raiserotate">\rotatebox{angle}{&nbsp;}</a>, &nbsp; and &nbsp;
+     <a href="#arrows">\longarrow[width]</a> &nbsp;
+     can be expressions as described above, rather than just
+     numeric constants. By using the <b>fs</b> variable, you can
+     construct <a href="#newcommands">\newcommand</a>
+     expressions that properly scale with font&nbsp;size.
+     For example, the <b>\mapsto</b> symbol is not explicitly provided
+     in any mimeTeX font, but is instead constructed by the
+     embedded <a href="#newcommands">\newcommand</a><br>
+       <nobr>&nbsp; &nbsp; &nbsp;<b>
+       { "\\mapsto", NULL, "{\\rule[fs/2]{1}{5+fs}\\hspace{-99}\\to}" },</b>
+       </nobr><br>
+     where \rule's [lift]=fs/2 and {height}=5+fs are scaled by
+     font&nbsp;size to render symbols<br>
+     &nbsp;
+      <a href="#preview"><img id="eval2" onclick="eqntext('eval2')"
+      src="../cgi-bin/mimetex.cgi?\small\text\begin{array}{rrl}
+      \backslash tiny & fs=\tiny\eval{fs} & \tiny\mapsto \\
+      \backslash small & fs=\small\eval{fs} & \small\mapsto \\
+      \backslash normalsize & fs=\normal\eval{fs} & \normal\mapsto\\
+      \backslash large & fs=\large\eval{fs} & \large\mapsto \\
+      etc. & &
+      \end{array}" alt="" border=0 align=middle></a><br>
+     whose rendering automatically varies appropriately with font&nbsp;size.
+     This kind of <a href="#newcommands">\newcommand</a> construction
+     is the primary use intended for mimeTeX's expression evaluation feature.
+     </p>
+
+ <p> But mimeTeX also provides the <b>\eval{<i>expression</i>}</b>
+     command to make the expression evaluation feature render
+     &quot;visible&quot; results. It's not particularly useful,
+     but an expression like &nbsp; <b>1+2+3+4+5=\eval{1+2+3+4+5}</b> &nbsp;
+     renders &nbsp;
+      <a href="#preview"><img id="eval2" onclick="eqntext('eval2')"
+      src="../cgi-bin/mimetex.cgi?\small 1+2+3+4+5=\eval{1+2+3+4+5}"
+      alt="" border=0 align="bottom"></a>. </p>
+
+ <p> Finally, one little &quot;gotcha&quot; is mimeTeX's
+     order&nbsp;of&nbsp;evaluation when interpreting expressions.
+     Parentheses are respected as you'd expect. But within
+     &nbsp; <b>(</b>...<b>)</b> &nbsp; parentheses, or in an
+     unparenthesized expression, mimeTeX finds the first (reading
+     from the left) operator, then iteratively evaluates the
+     separate subexpressions to that operator's left and to its right,
+     and then finally combines those two separate results.
+     So an expression like <b>2*3+4</b>&nbsp;renders&nbsp;<b>14</b>,
+     and you need to write <b>(2*3)+4</b>&nbsp;to&nbsp;get&nbsp;<b>10</b>.
+     </p>
+
+
+<h3> <a name="magstep"> \magstep{&nbsp;} &nbsp; and &nbsp;
+     \magbox{&nbsp;}{&nbsp;}<font size=5>...</font></a> </h3>
+
+ <p class="continue">
+     &nbsp;<b>\magstep{<i>magnification</i>}</b>, placed anywhere
+     within an expression, magnifies the entire expression
+     by an integer factor <b>1&lt;=<i>magnification</i>&lt;=10</b>
+     in both width and height.
+     Each single pixel thus becomes a square box, <i>e.g.</i>,
+     for <b><i>magnification</i>=2</b> each single pixel becomes
+     a four-pixel square box with dimensions&nbsp;<b>2</b>-by-<b>2</b>.
+     This compromises mimeTeX's anti-aliasing algorithm,
+     and the resulting image is both hazy/blurry and jagged/staircased
+     compared to an unmagnified image of the same expression.
+     For example, at <b>\LARGE</b> size,<br>
+      <nobr> &nbsp; &nbsp; &nbsp &nbsp;     
+        <b>f(x)=x^2</b> &nbsp;
+        renders &nbsp;
+        <a href="#preview"><img id="magbox1" onclick="eqntext('magbox1')"
+        src="../cgi-bin/mimetex.cgi?\LARGE f(x)=x^2"
+        alt="" border=0 align="absmiddle"></a> &nbsp; and </nobr><br>
+      <nobr> &nbsp; &nbsp; &nbsp &nbsp;     
+        <b>\magstep{2} f(x)=x^2</b> &nbsp;
+        renders &nbsp;
+        <a href="#preview"><img id="magbox2" onclick="eqntext('magbox2')"
+        src="../cgi-bin/mimetex.cgi?\LARGE\magstep{2} f(x)=x^2"
+        alt="" border=0 align="absmiddle"></a>&nbsp;, &nbsp; whereas </nobr><br>
+      at mimeTeX's largest &quot;native&quot; font&nbsp;size, <br>
+      <nobr> &nbsp; &nbsp; &nbsp &nbsp;     
+        <b>\Huge f(x)=x^2</b> &nbsp;
+        renders &nbsp;
+        <a href="#preview"><img id="magbox3" onclick="eqntext('magbox3')"
+        src="../cgi-bin/mimetex.cgi?\HUGE f(x)=x^2"
+        alt="" border=0 align="absmiddle"></a>&nbsp;. </nobr><br>
+     Nevertheless, if you still want to render images larger than
+     mimeTeX's <b>\Huge</b> size, then <b>\magstep{<i>magnification</i>}</b>
+     may render almost-acceptable results. </p>
+
+ <p> To magnify just part of an expression,
+     you can use <b>\magbox{<i>magnification</i>}{<i>expression</i>}</b>,
+     which only magnifies each pixel within the enclosed
+     <b>{<i>expression</i>}</b>, again
+     by an integer factor <b>1&lt;=<i>magnification</i>&lt;=10</b>
+     in both width and height, and also adjusts the baseline accordingly.
+     But <b>\magbox</b> is applied directly to mimeTeX's black-and-white
+     bitmap <u><b><i>&nbsp;before&nbsp;anti-aliasing&nbsp;</i></b></u>.
+     At the present time, this virtually completely defeats
+     mimeTeX's anti-aliasing algorithm, and the resulting image
+     exhibits even more pronounced jagged-line/staircase effects.
+     For example, <br>
+      <nobr> &nbsp; &nbsp; &nbsp &nbsp;     
+        <b>\LARGE f(x)={\magbox{2}{x}}^2</b> &nbsp;
+        renders &nbsp;
+        <a href="#preview"><img id="magbox5" onclick="eqntext('magbox5')"
+        src="../cgi-bin/mimetex.cgi?\LARGE f(x)={\magbox{2}{x}}^2"
+        alt="" border=0 align="absmiddle"></a>.<br>
+     </p>
 
 <h3> <a name="abbreviations">Abbreviations<font size=5>...</font></a> </h3>
 
@@ -2933,6 +3990,9 @@ Raise&nbsp;and&nbsp;rotate, Compose, Abbreviations, etc. &nbsp; </a> </h2>
        <tr> <td align="left">   <b>\begin{matrix}</b>        </td>
             <td align="center"> <b>a&b&c \\ d&e&f \\ etc</b> </td>
             <td align="left">   <b>\end{matrix}</b>          </td> </tr>
+       <tr> <td align="left">   <b>\begin{tabular}</b>       </td>
+            <td align="center"> <b>a&b&c \\ d&e&f \\ etc</b> </td>
+            <td align="left">   <b>\end{tabular}</b>         </td> </tr>
        <tr> <td align="left">   <b>\begin{pmatrix}</b>       </td>
             <td align="center"> <b>a&b&c \\ d&e&f \\ etc</b> </td>
             <td align="left">   <b>\end{pmatrix}</b>         </td> </tr>
@@ -3340,6 +4400,14 @@ Raise&nbsp;and&nbsp;rotate, Compose, Abbreviations, etc. &nbsp; </a> </h2>
      In any case, if <b><i>filename</i></b> isn't found, then
      <b>\input</b> tries to read <b><i>filename</i>.tex</b> instead.</p>
 
+ <p> And for further security, <b>\input{&nbsp;}</b> is disabled by default
+     unless mimeTeX is compiled with either the <b>-DINPUTOK</b> or
+     <b>-DINPUTPATH</b> or <b>-DINPUTREFERER</b>
+     <a href="#options">compile&nbsp;option</a> discussed above.
+     When it's disabled, the command  <b>\input{<i>filename</i>}</b>
+     renders the error message
+     <b>[\input{<i>filename</i>}&nbsp;not&nbsp;permitted]</b>&nbsp;. </p>
+
  <p> MimeTeX also supports the optional form
      <b>\input{<i>filename:tag</i>}</b>.  In this case,
      <b><i>filename</i></b> is read as before, but only those characters
@@ -3363,6 +4431,14 @@ Raise&nbsp;and&nbsp;rotate, Compose, Abbreviations, etc. &nbsp; </a> </h2>
      <a href="#options">compile&nbsp;option</a>.  Before using
      the <b>\counter</b> command, Unix "touch" and "chmod" those files
      so they're mimeTeX readable and writable. </p>
+
+ <p> Also as with <b>\input</b>, for security <b>\counter</b> is
+     disabled by default unless mimeTeX is compiled with either
+     the <b>-DINPUTOK</b> or the <b>-DCOUNTEROK</b>
+     <a href="#options">compile&nbsp;option</a>
+     (notice that <b>-DINPUTOK</b> also enables <b>\counter</b>).
+     If you've compiled mimeTeX with <b>\counter</b> enabled,
+     then it behaves as <nobr>follows...</nobr> </p>
 
  <p> If <b><i>counterfile</i></b> isn't readable and writable,
      then the <b>\counter</b> command always displays
@@ -3405,6 +4481,25 @@ Raise&nbsp;and&nbsp;rotate, Compose, Abbreviations, etc. &nbsp; </a> </h2>
      unless/until you "touch" and "chmod" counters.txt (and, optionally,
      counters.log) in your mimetex.cgi directory. </p>
 
+<h3> <a name="environment">\environment
+<font size=5>...</font></a> </h3>
+ <p> Submitting the expression &nbsp; <b>\environment</b> &nbsp;
+     to mimeTeX renders </p> <center>
+       <img id="environ1"
+       src="../cgi-bin/mimetex.cgi?\nocaching\environment"
+       align="middle" border=0> </center>
+ <p class="continue"> displaying the http environment variables
+     known to mimeTeX.  This is primarily a programming aid,
+     showing information available to mimeTeX that might facilitate
+     future enhancements. </p>
+
+ <p> As with <b>\input</b> and <b>\counter</b> above,
+     for security <b>\environment</b> is
+     disabled by default unless mimeTeX is compiled with either
+     the <b>-DINPUTOK</b> or the <b>-DENVIRONOK</b>
+     <a href="#options">compile&nbsp;option</a>
+     (notice that <b>-DINPUTOK</b> also enables <b>\environment</b>). </p>
+
 
 <h2> <a name="exceptions"> (IIIh) Other Exceptions
 to LaTeX Syntax &nbsp; </a> </h2>
@@ -3419,6 +4514,98 @@ to LaTeX Syntax &nbsp; </a> </h2>
      would be interpreted, which is entirely wrong for <b>\frac</b>.
      The same requirement also applies to other combinations of commands,
      e.g., you must write <b>\sqrt{\frac\alpha\beta}</b>, etc. </p>
+
+
+<h2> <a name="messages"> (IIIi) mimeTeX Errors
+and Messages &nbsp; </a> </h2>
+
+<h3> mimeTeX Errors<font size=5>...</font> </h3>
+
+ <p> Any (La)TeX error is typically also a mimeTeX error.
+     However, mimeTeX has no command line interface or
+     <b>.</b>log file for reporting errors.  Its only
+     communication with you is through the mimeTeX image
+     rendered by your browser.  So error messages are embedded
+     in that image whenever feasible.  For example,
+     suppose you want to see
+      <a href="#preview"><img id="messages1" onclick="eqntext('messages1')"
+      src="../cgi-bin/mimetex.cgi?\normalsize\alpha\beta\gamma\delta"
+      border=0 align=bottom></a>, but you mistakenly type
+      &nbsp; <b>\alpha\bethe\gamma\delta</b> &nbsp; instead.
+     Then the image rendered is
+      <a href="#preview"><img id="messages2" onclick="eqntext('messages2')"
+      src="../cgi-bin/mimetex.cgi?\normalsize\alpha\bethe\gamma\delta"
+      border=0 align=bottom></a>, indicating the unrecognized
+     <b>[\bethe?]</b> where you wanted to type &nbsp; <b>\beta</b> &nbsp;
+     and hoped to see
+      <a href="#preview"><img id="messages3" onclick="eqntext('messages3')"
+      src="../cgi-bin/mimetex.cgi?\normalsize\bf\beta"
+      border=0 align=bottom></a>.
+     If your expression contains some unprintable character
+     (meaning any character mimeTeX has no bitmap for),
+     then just &nbsp;
+      <a href="#preview"><img id="messages4" onclick="eqntext('messages4')"
+      src="../cgi-bin/mimetex.cgi?\small\bf[?]"
+      border=0 align=bottom></a> &nbsp; is displayed in the
+     corresponding position. </p>
+
+ <p> The preceding example illustrates a pretty trivial error.
+     Any non-trivial errors in your expression are likely to
+     go unrecognized and unreported by mimeTeX, and to render
+     unexpected images.  While checking your input expression
+     for syntax errors, keep in mind the following points
+     about mimeTeX's behavior: </p>
+     <ul>
+       <li> An unmatched left brace &nbsp; <b>{</b> &nbsp; is matched
+            by mimeTeX with a "phantom" right brace &nbsp; <b>}</b> &nbsp;
+            that's imagined to be at the end of your expression. </li>
+       <li> Likewise, an unmatched &nbsp; <b>\left(</b>, &nbsp;
+            or <b>\left\{</b> &nbsp; or <b>\left\</b><i>anything</i>, &nbsp;
+            is matched by mimeTeX with a "phantom" &nbsp; <b>\right.</b>
+            &nbsp; at the end of your expression. </li>
+       <li> On the other hand, an unmatched right brace &nbsp; <b>}</b>
+            &nbsp; is displayed in place, as if you had typed \rbrace. </li>
+       <li> But an unmatched &nbsp; <b>\right\</b><i>anything</i> &nbsp;
+            is interpreted as an abbreviation for <b>\</b>rightarrow
+            followed by <b>\</b><i>anything</i>.  For example, &nbsp;
+            <b>\leff(&nbsp;abc&nbsp;\right)&nbsp;def</b> &nbsp; renders &nbsp;
+              <a href="#preview"><img id="messages5"
+              onclick="eqntext('messages5')"
+              src="../cgi-bin/mimetex.cgi?\small\leff(abc\right)def"
+              border=0 align=bottom></a>. </li>
+     </ul> <!-- p class="continue">
+     </p -->
+
+<h3> mimeTeX Messages<font size=5>...</font> </h3>
+
+<!--
+ <p> The special mimeTeX directive &nbsp; <b>\version</b> &nbsp;
+     displays the following information </p>
+     <center>
+       <a href="#preview"><img id="messages6" onclick="eqntext('messages6')"
+       src="../cgi-bin/mimetex.cgi?\version"
+       border=0 align=middle> </a> </center>
+-->
+ <p> The latest release of mimeTeX is version
+       <a href="#preview"><img id="messages11" onclick="eqntext('messages11')"
+       src="../cgi-bin/mimetex.cgi?\small\versionnumber"
+       alt="" border=0 align="bottom"></a>
+     which was last revised
+       <a href="#preview"><img id="messages12" onclick="eqntext('messages12')"
+       src="../cgi-bin/mimetex.cgi?\small\revisiondate"
+       alt="" border=0 align="bottom"></a>.
+     The special mimeTeX directive &nbsp; <b>\version</b> &nbsp;
+     displays that same information, </p>
+      <center>
+       <a href="#preview"><img id="messages13" onclick="eqntext('messages13')"
+       src="../cgi-bin/mimetex.cgi?\version"
+       alt="" border=0 align=middle></a> </center>
+ <p> To check that your own release of mimeTeX is current,
+     type a url into your browser's locator window something like <br>
+        &nbsp; &nbsp; &nbsp; &nbsp;
+     <b>http://www.<i>yourdomain</i>.com/cgi-bin/mimetex.cgi?\version</b> <br>
+     which will display the version and revision date of
+     mimeTeX installed on your server. </p>
 
 
 <!-- +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -3555,24 +4742,36 @@ SECTION IV.  APPENDICES
 
 <p> One small problem with the above procedure is that the default
   &nbsp; gftype &nbsp; program supplied with most TeX distributions
-  can't emit the long lines needed to display mimeTeX's larger font
-  sizes.  You'll need to compile your own version from source.
+  can't emit the long lines needed to display mimeTeX's larger font sizes.
+  <a href="http://www.forkosh.com/gftype.zip"
+  target="_top">gftype.zip</a>&nbsp;contains a statically linked linux
+  executable modified to emit the necessary long lines.
+  It may or may not run on your intel linux machine.
+  If not, you'll need to compile your own version from source.
   The following instructions are for Unix/Linux: <br> &nbsp; &nbsp;
   &nbsp; &nbsp; First, download both 
-  <a href="http://www.ctan.org/tex-archive/systems/web2c/web-7.5.3.tar.gz"
+  <!-- http://www.ctan.org/tex-archive/systems/web2c/web-7.5.3.tar.gz -->
+  <a href="http://www.forkosh.com/web-7.5.3.tar.gz"
   target="_top">web-7.5.3.tar.gz</a> and
-  <a href="http://www.ctan.org/tex-archive/systems/web2c/web2c-7.5.3.tar.gz"
-  target="_top">web2c-7.5.3.tar.gz</a>,
-  or more recent versions.  Then &nbsp; untar &nbsp; them both,
+  <!-- http://www.ctan.org/tex-archive/systems/web2c/web2c-7.5.3.tar.gz -->
+  <a href="http://www.forkosh.com/web2c-7.5.3.tar.gz"
+  target="_top">web2c-7.5.3.tar.gz</a>
+  <!-- or more recent versions. --> (note: these files are no longer
+  explicitly archived by&nbsp;<a href="http://www.ctan.org/"
+  target="_top">ctan</a>, having been superceded
+  by&nbsp;<a href="http://www.ctan.org/tex-archive/systems/texlive"
+  target="_top">texlive</a>&nbsp;sources, so the preceding two links
+  point to copies kept on my site, www.forkosh.com).
+  Then &nbsp; untar &nbsp; both gzipped tar files,
   &nbsp; cd&nbsp;web2c-7.5.3/ &nbsp; and run &nbsp; ./configure &nbsp;
   and &nbsp; make &nbsp; in the usual way (make may fail before
   completion if you don't have all needed fonts installed,
   but it will create and compile gftype.c before failing).  Now edit
-  &nbsp; texk/web2c/gftype.c&nbsp; and notice two lines very near the top
-  that &nbsp; #define&nbsp;maxrow&nbsp;(79) &nbsp and similarly for maxcol.
-  Change both 79's to 1024, and then re-run make.  The new &nbsp;
-  texk/web2c/gftype &nbsp; executable image can emit the long
-  lines needed for mimeTeX's larger font sizes. </p>
+  &nbsp; texk/web2c/gftype.c&nbsp; and notice three lines very near the top
+  that &nbsp; #define&nbsp;maxrow&nbsp;(79) &nbsp and similarly for
+  maxcol and linelength. Change all three 79's to 1024, and
+  then re-run make. The new &nbsp; texk/web2c/gftype &nbsp; executable
+  image can emit the long lines needed for mimeTeX's larger font sizes. </p>
 
 <p> Finally, the Unix/Linux bash shell script
   <a href="http://www.forkosh.com/texfonts.sh"
@@ -3950,7 +5149,7 @@ Footer across bottom of page
 <hr size=4>
 <table> <tr>
  <td> <font size=3 color="maroon"> <b>
-  <nobr>Copyright <font size=5>&copy;</font> 2002-2008,
+  <nobr>Copyright <font size=5>&copy;</font> 2002-2012,
   <a href="http://www.forkosh.com">John Forkosh Associates, Inc.</a>
   </nobr><br>
   email: <a href="mailto:john&#64;forkosh&#46;com">john&#64;forkosh&#46;com</a>

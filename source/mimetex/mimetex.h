@@ -2,7 +2,7 @@
 #define	_MIMETEX
 /****************************************************************************
  *
- * Copyright(c) 2002-2008, John Forkosh Associates, Inc. All rights reserved.
+ * Copyright(c) 2002-2011, John Forkosh Associates, Inc. All rights reserved.
  *           http://www.forkosh.com   mailto: john@forkosh.com
  * --------------------------------------------------------------------------
  * This file is part of mimeTeX, which is free software. You may redistribute
@@ -43,8 +43,6 @@
  *
  ***************************************************************************/
 
-/*added by Marcus Cuda to get mimetex to compile under windows 11/11/2008*/
-#define strncasecmp _strnicmp
 
 /* --------------------------------------------------------------------------
 check for compilation by parts (not supported yet)
@@ -80,6 +78,17 @@ check for compilation by parts (not supported yet)
   /* #define SHARED(type,variable,value) STATIC type variable */
 #endif
 
+
+/* -------------------------------------------------------------------------
+miscellaneous macros
+-------------------------------------------------------------------------- */
+#define	max2(x,y)  ((x)>(y)? (x):(y))	/* larger of 2 arguments */
+#define	min2(x,y)  ((x)<(y)? (x):(y))	/* smaller of 2 arguments */
+#define	max3(x,y,z) max2(max2(x,y),(z))	/* largest of 3 arguments */
+#define	min3(x,y,z) min2(min2(x,y),(z))	/* smallest of 3 arguments */
+#define absval(x)  ((x)>=0?(x):(-(x)))	/* absolute value */
+#define	iround(x)  ((int)((x)>=0?(x)+0.5:(x)-0.5)) /* round double to int */
+#define	dmod(x,y)  ((x)-((y)*((double)((int)((x)/(y)))))) /*x%y for doubles*/
 
 /* --------------------------------------------------------------------------
 macros to get/set/unset a single bit (in rasters), and some bitfield macros
@@ -283,6 +292,9 @@ mathchardef
 #define	BBOLD10		(7)		/* blackboard bold \mathbb A ... */
 #define	STMARY10	(8)		/* stmaryrd math symbols */
 #define	CYR10		(9)		/* cyrillic (wncyr10.mf) */
+#define	CMMI10GR	(10)		/* CMMI10 with a for \alpha, etc */
+#define	CMMI10BGR	(11)		/* CMMIB10 with a for \alpha, etc */
+#define	BBOLD10GR	(12)		/* BBOLD10 with a for \alpha, etc */
 #define	NOTACHAR	(99)		/* e.g., \frac */
 /* --- dummy argument value for handlers --- */
 #define	NOVALUE		(-989898)	/*charnum,family,class used as args*/
@@ -292,7 +304,7 @@ mathchardef
  * ----------------------- */
 STATIC	int  nfontinfo			/* legal font#'s are 1...nfontinfo */
 #ifdef INITVALS
-  = 8
+  = 11
 #endif
   ;
 STATIC	struct {char *name; int family; int istext; int class;}
@@ -309,6 +321,9 @@ STATIC	struct {char *name; int family; int istext; int class;}
     { "\\mathbf",  CMMIB10, 0, -1 }, /*(6) \bf,\mathbf{abc}-->{\mathbf~abc}*/
     { "\\mathrm",  CMR10,   0, -1 }, /*(7) \mathrm */
     { "\\cyr",     CYR10,   1, -1 }, /*(8) \cyr (defaults as text mode) */
+    { "\\textgreek",CMMI10GR,1,-1 }, /*(9) \textgreek{ab}-->\alpha\beta */
+    { "\\textbfgreek",CMMI10BGR,1,-1 },/*(10)\textbfgreek{ab}-->\alpha\beta*/
+    { "\\textbbgreek",BBOLD10GR,1,-1 },/*(11)\textbbgreek{ab}-->\alpha\beta*/
     {  NULL,	   0,       0,  0 } }
 #endif
   ; /* --- end-of-fonts[] --- */
@@ -316,8 +331,10 @@ STATIC	struct {char *name; int family; int istext; int class;}
 /* ---
  * additional font attributes (only size is implemented)
  * ----------------------------------------------------- */
-/* --- font sizes 0-7 = tiny,small,normal,large,Large,LARGE,huge,Huge --- */
-#define	LARGESTSIZE	(7)
+/* --- font sizes 0-10 = tiny=0,scriptsize=1,footnotesize=2,small=3,
+       normalsize=4,large=5,Large=6,LARGE=7,huge=8,Huge=9,HUGE=10 --- */
+/* --- (mimeTeX adds HUGE) --- */
+#define	LARGESTSIZE	(10)
 #ifdef DEFAULTSIZE
   #ifndef NORMALSIZE
     #define NORMALSIZE (DEFAULTSIZE)
@@ -325,19 +342,25 @@ STATIC	struct {char *name; int family; int istext; int class;}
 #endif
 #ifndef	NORMALSIZE
   /*#define NORMALSIZE	(2)*/
-  #define NORMALSIZE	(3)
+  /*#define NORMALSIZE	(3)*/
+  #define NORMALSIZE	(4)
 #endif
 #ifndef	DISPLAYSIZE
   /* --- automatically sets scripts in \displaystyle when fontsize>= --- */
   /*#define DISPLAYSIZE	(NORMALSIZE+1)*/
-  #define DISPLAYSIZE	(3)
+  /*#define DISPLAYSIZE	(3)*/
+  #define DISPLAYSIZE	(4)
 #endif
 
 /* ---
 aspect ratio is width/height of the displayed image of a pixel
 -------------------------------------------------------------- */
 #define	ASPECTRATIO	1.0 /*(16.0/9.0)*/
-#define	SQRTWIDTH(sqrtht) ((int)(.5*((double)(sqrtht+1))*ASPECTRATIO + 0.5))
+#define SURDSERIFWIDTH(sqrtht) max2(1, ( 1 + (((sqrtht)+8)/20) ) )
+#define	SURDWIDTH(sqrtht,x) ( SURDSERIFWIDTH((sqrtht)) + \
+		(((sqrtht)+1)*ASPECTRATIO + 1) / ((((sqrtht))/20)+(x))  )
+		/* ((int)(.5*((double)((sqrtht)+1))*ASPECTRATIO + 0.5)) ) */
+#define	SQRTWIDTH(sqrtht,x) min2(32,max2(10,SURDWIDTH((sqrtht),(x))))
 
 /* ---
  * space between adjacent symbols, e.g., symspace[RELATION][VARIABLE]
@@ -434,18 +457,35 @@ STATIC	fontfamily aafonttable[]
 #ifdef INITVALS
  =
  {/* -----------------------------------------------------------------------------------------
-    family     size=0,        1,        2,        3,        4,        5,        6,        7
+    family     size=0,        1,        2,        3,        4,        5,
+                    6,        7,        8,        9,	   10
   ----------------------------------------------------------------------------------------- */
-  {   CMR10,{   cmr83,   cmr100,   cmr118,   cmr131,   cmr160,   cmr180,   cmr210,   cmr250}},
-  {  CMMI10,{  cmmi83,  cmmi100,  cmmi118,  cmmi131,  cmmi160,  cmmi180,  cmmi210,  cmmi250}},
-  { CMMIB10,{ cmmib83, cmmib100, cmmib118, cmmib131, cmmib160, cmmib180, cmmib210, cmmib250}},
-  {  CMSY10,{  cmsy83,  cmsy100,  cmsy118,  cmsy131,  cmsy160,  cmsy180,  cmsy210,  cmsy250}},
-  {  CMEX10,{  cmex83,  cmex100,  cmex118,  cmex131,  cmex160,  cmex180,  cmex210,  cmex250}},
-  {  RSFS10,{  rsfs83,  rsfs100,  rsfs118,  rsfs131,  rsfs160,  rsfs180,  rsfs210,  rsfs250}},
-  { BBOLD10,{ bbold83, bbold100, bbold118, bbold131, bbold160, bbold180, bbold210, bbold250}},
-  {STMARY10,{stmary83,stmary100,stmary118,stmary131,stmary160,stmary180,stmary210,stmary250}},
-  {   CYR10,{ wncyr83, wncyr100, wncyr118, wncyr131, wncyr160, wncyr180, wncyr210, wncyr250}},
-  {    -999,{    NULL,     NULL,     NULL,     NULL,     NULL,     NULL,     NULL,     NULL}}
+  {   CMR10,{   cmr83,   cmr100,   cmr118,   cmr131,   cmr160,   cmr180,
+               cmr210,   cmr250,   cmr325,   cmr450,   cmr600}},
+  {  CMMI10,{  cmmi83,  cmmi100,  cmmi118,  cmmi131,  cmmi160,  cmmi180,
+              cmmi210,  cmmi250,  cmmi325,  cmmi450,  cmmi600}},
+  { CMMIB10,{ cmmib83, cmmib100, cmmib118, cmmib131, cmmib160, cmmib180,
+             cmmib210, cmmib250, cmmib325, cmmib450, cmmib600}},
+  {  CMSY10,{  cmsy83,  cmsy100,  cmsy118,  cmsy131,  cmsy160,  cmsy180,
+              cmsy210,  cmsy250,  cmsy325,  cmsy450,  cmsy600}},
+  {  CMEX10,{  cmex83,  cmex100,  cmex118,  cmex131,  cmex160,  cmex180,
+              cmex210,  cmex250,  cmex325,  cmex450,  cmex600}},
+  {  RSFS10,{  rsfs83,  rsfs100,  rsfs118,  rsfs131,  rsfs160,  rsfs180,
+              rsfs210,  rsfs250,  rsfs325,  rsfs450,  rsfs600}},
+  { BBOLD10,{ bbold83, bbold100, bbold118, bbold131, bbold160, bbold180,
+             bbold210, bbold250, bbold325, bbold450, bbold600}},
+  {STMARY10,{stmary83,stmary100,stmary118,stmary131,stmary160,stmary180,
+            stmary210,stmary250,stmary325,stmary450,stmary600}},
+  {   CYR10,{ wncyr83, wncyr100, wncyr118, wncyr131, wncyr160, wncyr180,
+             wncyr210, wncyr250, wncyr325, wncyr450, wncyr600}},
+  {CMMI10GR,{  cmmi83,  cmmi100,  cmmi118,  cmmi131,  cmmi160,  cmmi180,
+              cmmi210,  cmmi250,  cmmi325,  cmmi450,  cmmi600}},
+  {CMMI10BGR,{cmmib83, cmmib100, cmmib118, cmmib131, cmmib160, cmmib180,
+             cmmib210, cmmib250, cmmib325, cmmib450, cmmib600}},
+  {BBOLD10GR,{bbold83, bbold100, bbold118, bbold131, bbold160, bbold180,
+             bbold210, bbold250, bbold325, bbold450, bbold600}},
+  {    -999,{    NULL,     NULL,     NULL,     NULL,     NULL,     NULL,
+                 NULL,     NULL,     NULL,     NULL,     NULL}}
  }
 #endif
  ; /* --- end-of-aafonttable[] --- */
@@ -456,18 +496,35 @@ STATIC	fontfamily aafonttable[]
  #ifdef INITVALS
   =
   {/* -----------------------------------------------------------------------------------------
-    family     size=0,        1,        2,        3,        4,        5,        6,        7
+    family     size=0,        1,        2,        3,        4,        5,
+                    6,        7,        8,        9,       10
    ----------------------------------------------------------------------------------------- */
-   {  CMR10,{  cmr250,  cmr1200,  cmr1200,  cmr1200,  cmr1200,  cmr1200,  cmr1200,  cmr1200}},
-   { CMMI10,{ cmmi250,  cmmi100,  cmmi118,  cmmi131,  cmmi160,  cmmi180,  cmmi210,  cmmi250}},
-   {CMMIB10,{cmmib250, cmmib100, cmmib118, cmmib131, cmmib160, cmmib180, cmmib210, cmmib250}},
-   { CMSY10,{ cmsy250,  cmsy100,  cmsy118,  cmsy131,  cmsy160,  cmsy180,  cmsy210,  cmsy250}},
-   { CMEX10,{ cmex250,  cmex100,  cmex118,  cmex131,  cmex160,  cmex180,  cmex210,  cmex250}},
-   { RSFS10,{ rsfs250,  rsfs100,  rsfs118,  rsfs131,  rsfs160,  rsfs180,  rsfs210,  rsfs250}},
-  { BBOLD10,{bbold250, bbold100, bbold118, bbold131, bbold160, bbold180, bbold210, bbold250}},
- {STMARY10,{stmary250,stmary100,stmary118,stmary131,stmary160,stmary180,stmary210,stmary250}},
-  {   CYR10,{ wncyr83, wncyr100, wncyr118, wncyr131, wncyr160, wncyr180, wncyr210, wncyr250}},
-   {   -999,{    NULL,     NULL,     NULL,     NULL,     NULL,     NULL,     NULL,     NULL}}
+   {  CMR10,{  cmr250,  cmr1200,  cmr1200,  cmr1200,  cmr1200,  cmr1200,
+              cmr1200,  cmr1200,  cmr1200,  cmr1200,  cmr1200}},
+   { CMMI10,{ cmmi250,  cmmi100,  cmmi118,  cmmi131,  cmmi160,  cmmi180,
+              cmmi210,  cmmi250,  cmmi325,  cmmi450,  cmmi600}},
+   {CMMIB10,{cmmib250, cmmib100, cmmib118, cmmib131, cmmib160, cmmib180,
+             cmmib210, cmmib250, cmmib325, cmmib450, cmmib600}},
+   { CMSY10,{ cmsy250,  cmsy100,  cmsy118,  cmsy131,  cmsy160,  cmsy180,
+              cmsy210,  cmsy250,  cmsy325,  cmsy450,  cmsy600}},
+   { CMEX10,{ cmex250,  cmex100,  cmex118,  cmex131,  cmex160,  cmex180,
+              cmex210,  cmex250,  cmex325,  cmex450,  cmex600}},
+   { RSFS10,{ rsfs250,  rsfs100,  rsfs118,  rsfs131,  rsfs160,  rsfs180,
+              rsfs210,  rsfs250,  rsfs325,  rsfs450,  rsfs600}},
+  { BBOLD10,{bbold250, bbold100, bbold118, bbold131, bbold160, bbold180,
+             bbold210, bbold250, bbold325, bbold450, bbold600}},
+ {STMARY10,{stmary250,stmary100,stmary118,stmary131,stmary160,stmary180,
+            stmary210,stmary250,stmary325,stmary450,stmary600}},
+  {   CYR10,{wncyr250, wncyr100, wncyr118, wncyr131, wncyr160, wncyr180,
+             wncyr210, wncyr250, wncyr325, wncyr450, wncyr600}},
+  {CMMI10GR,{ cmmi250,  cmmi100,  cmmi118,  cmmi131,  cmmi160,  cmmi180,
+              cmmi210,  cmmi250,  cmmi325,  cmmi450,  cmmi600}},
+ {CMMI10BGR,{cmmib250, cmmib100, cmmib118, cmmib131, cmmib160, cmmib180,
+             cmmib210, cmmib250, cmmib325, cmmib450, cmmib600}},
+ {BBOLD10GR,{bbold250, bbold100, bbold118, bbold131, bbold160, bbold180,
+             bbold210, bbold250, bbold325, bbold450, bbold600}},
+   {   -999,{    NULL,     NULL,     NULL,     NULL,     NULL,     NULL,
+                 NULL,     NULL,     NULL,     NULL,     NULL}}
   }
  #endif
   ; /* --- end-of-ssfonttable[] --- */
@@ -536,12 +593,16 @@ subraster *rastcircle();		/* handle \circle(xdiam[,ydiam]) */
 subraster *rastbezier();		/*handle\bezier(c0,r0)(c1,r1)(ct,rt)*/
 subraster *rastraise();			/* handle \raisebox{lift}{expr} */
 subraster *rastrotate();		/* handle \rotatebox{degs}{expr} */
+subraster *rastmagnify();		/* handle \magnify{magstep}{expr} */
 subraster *rastreflect();		/* handle \reflectbox[axis]{expr} */
 subraster *rastfbox();			/* handle \fbox{expr} */
 subraster *rastinput();			/* handle \input{filename} */
 subraster *rastcounter();		/* handle \counter{filename} */
+subraster *rasteval();			/* handle \eval{expression} */
 subraster *rasttoday();			/* handle \today[+/-tzdelta,ifmt] */
 subraster *rastcalendar();		/* handle \calendar[yaer,month] */
+subraster *rastenviron();		/* handle \environment */
+subraster *rastmessage();		/* handle \message */
 subraster *rastnoop();			/* handle \escape's to be flushed */
 
 /* --- sqrt --- */
@@ -561,6 +622,7 @@ subraster *rastnoop();			/* handle \escape's to be flushed */
 #define	ISDISPLAYSTYLE	(2)		/* set isdisplaystyle */
 #define	ISDISPLAYSIZE	(21)		/* set displaysize */
 #define	ISFONTSIZE	(3)		/* set fontsize */
+#define	ISMAGSTEP	(31)		/* set magstep */
 #define	ISWEIGHT	(4)		/* set aa params */
 #define	ISOPAQUE	(5)		/* set background opaque */
 #define	ISSUPER		(6)		/* set supersampling/lowpass */
@@ -577,6 +639,7 @@ subraster *rastnoop();			/* handle \escape's to be flushed */
 #define	ISSTRING	(11)		/* set ascii string mode */
 #define	ISSMASH		(12)		/* set (minimum) "smash" margin */
 #define	ISCONTENTTYPE	(13)		/*enable/disable Content-type lines*/
+#define	ISCONTENTCACHED	(14)		/* write Content-type to cache file*/
 
 /* ---
  * mathchardefs for symbols recognized by mimetex
@@ -620,11 +683,17 @@ STATIC	mathchardef symtable[]
     { "\\qbezier",NOVALUE,NOVALUE,NOVALUE,(HANDLER)(rastbezier) },
     { "\\raisebox",NOVALUE,NOVALUE,NOVALUE,(HANDLER)(rastraise) },
     { "\\rotatebox",NOVALUE,NOVALUE,NOVALUE,(HANDLER)(rastrotate) },
+    { "\\magnify",NOVALUE,NOVALUE,NOVALUE,(HANDLER)(rastmagnify) },
+    { "\\magbox",NOVALUE,NOVALUE,NOVALUE,(HANDLER)(rastmagnify) },
     { "\\reflectbox",NOVALUE,NOVALUE,NOVALUE,(HANDLER)(rastreflect) },
     { "\\fbox", NOVALUE,NOVALUE,NOVALUE,  (HANDLER)(rastfbox) },
+    { "\\boxed",NOVALUE,NOVALUE,NOVALUE,  (HANDLER)(rastfbox) },
     { "\\input",NOVALUE,NOVALUE,NOVALUE,  (HANDLER)(rastinput) },
+    { "\\evaluate",NOVALUE,NOVALUE,NOVALUE,(HANDLER)(rasteval) },
     { "\\today",NOVALUE,NOVALUE,NOVALUE,  (HANDLER)(rasttoday) },
     { "\\calendar",NOVALUE,NOVALUE,NOVALUE,(HANDLER)(rastcalendar) },
+    { "\\environment",NOVALUE,NOVALUE,NOVALUE,(HANDLER)(rastenviron) },
+    { "\\message",NOVALUE,NOVALUE,NOVALUE,(HANDLER)(rastmessage) },
     { "\\counter",NOVALUE,NOVALUE,NOVALUE,(HANDLER)(rastcounter) },
     /* --- spaces --- */
     { "\\/",	1,	NOVALUE,NOVALUE,  (HANDLER)(rastspace) },
@@ -670,9 +739,13 @@ STATIC	mathchardef symtable[]
     { "\\mathbb",	  5,	 NOVALUE,NOVALUE, (HANDLER)(rastfont) },
     { "\\rm",		  3,	 NOVALUE,NOVALUE, (HANDLER)(rastfont) },
     { "\\text",		  3,	 NOVALUE,NOVALUE, (HANDLER)(rastfont) },
+    { "\\textbf",	  3,	 NOVALUE,NOVALUE, (HANDLER)(rastfont) },
     { "\\textrm",	  3,	 NOVALUE,NOVALUE, (HANDLER)(rastfont) },
     { "\\mathrm",	  7,	 NOVALUE,NOVALUE, (HANDLER)(rastfont) },
     { "\\cyr",		  8,	 NOVALUE,NOVALUE, (HANDLER)(rastfont) },
+    { "\\textgreek",	  9,	 NOVALUE,NOVALUE, (HANDLER)(rastfont) },
+    { "\\textbfgreek",	 10,	 NOVALUE,NOVALUE, (HANDLER)(rastfont) },
+    { "\\textbbgreek",	 11,	 NOVALUE,NOVALUE, (HANDLER)(rastfont) },
     { "\\mathbf",	  6,	 NOVALUE,NOVALUE, (HANDLER)(rastfont) },
     { "\\bf",		  6,	 NOVALUE,NOVALUE, (HANDLER)(rastfont) },
     { "\\mathtt",	  3,	 NOVALUE,NOVALUE, (HANDLER)(rastfont) },
@@ -697,18 +770,19 @@ STATIC	mathchardef symtable[]
     { "\\textstyle", ISDISPLAYSTYLE,   0,NOVALUE, (HANDLER)(rastflags) },
     { "\\displaysize",ISDISPLAYSIZE,NOVALUE,NOVALUE,(HANDLER)(rastflags)},
     { "\\tiny",      ISFONTSIZE,       0,NOVALUE, (HANDLER)(rastflags) },
-    { "\\scriptsize",ISFONTSIZE,       0,NOVALUE, (HANDLER)(rastflags) },
-    { "\\footnotesize",ISFONTSIZE,     1,NOVALUE, (HANDLER)(rastflags) },
-    { "\\small",     ISFONTSIZE,       1,NOVALUE, (HANDLER)(rastflags) },
-    { "\\normalsize",ISFONTSIZE,       2,NOVALUE, (HANDLER)(rastflags) },
-    { "\\large",     ISFONTSIZE,       3,NOVALUE, (HANDLER)(rastflags) },
-    { "\\Large",     ISFONTSIZE,       4,NOVALUE, (HANDLER)(rastflags) },
-    { "\\LARGE",     ISFONTSIZE,       5,NOVALUE, (HANDLER)(rastflags) },
-    { "\\huge",      ISFONTSIZE,       6,NOVALUE, (HANDLER)(rastflags) },
-    { "\\Huge",      ISFONTSIZE,       7,NOVALUE, (HANDLER)(rastflags) },
-    { "\\HUGE",      ISFONTSIZE,       7,NOVALUE, (HANDLER)(rastflags) },
+    { "\\scriptsize",ISFONTSIZE,       1,NOVALUE, (HANDLER)(rastflags) },
+    { "\\footnotesize",ISFONTSIZE,     2,NOVALUE, (HANDLER)(rastflags) },
+    { "\\small",     ISFONTSIZE,       3,NOVALUE, (HANDLER)(rastflags) },
+    { "\\normalsize",ISFONTSIZE,       4,NOVALUE, (HANDLER)(rastflags) },
+    { "\\large",     ISFONTSIZE,       5,NOVALUE, (HANDLER)(rastflags) },
+    { "\\Large",     ISFONTSIZE,       6,NOVALUE, (HANDLER)(rastflags) },
+    { "\\LARGE",     ISFONTSIZE,       7,NOVALUE, (HANDLER)(rastflags) },
+    { "\\huge",      ISFONTSIZE,       8,NOVALUE, (HANDLER)(rastflags) },
+    { "\\Huge",      ISFONTSIZE,       9,NOVALUE, (HANDLER)(rastflags) },
+    { "\\HUGE",      ISFONTSIZE,      10,NOVALUE, (HANDLER)(rastflags) },
     { "\\fontsize",  ISFONTSIZE, NOVALUE,NOVALUE, (HANDLER)(rastflags) },
     { "\\fs",        ISFONTSIZE, NOVALUE,NOVALUE, (HANDLER)(rastflags) },
+    { "\\magstep",   ISMAGSTEP,  NOVALUE,NOVALUE, (HANDLER)(rastflags) },
     { "\\shrinkfactor",ISSHRINK, NOVALUE,NOVALUE, (HANDLER)(rastflags) },
     { "\\sf",        ISSHRINK,   NOVALUE,NOVALUE, (HANDLER)(rastflags) },
     { "\\light",     ISWEIGHT,         0,NOVALUE, (HANDLER)(rastflags) },
@@ -726,6 +800,8 @@ STATIC	mathchardef symtable[]
     { "\\pnmparams",PNMPARAMS,   NOVALUE,NOVALUE, (HANDLER)(rastflags) },
     { "\\gammacorrection",ISGAMMA,NOVALUE,NOVALUE,(HANDLER)(rastflags) },
     { "\\nocontenttype",ISCONTENTTYPE, 0,NOVALUE, (HANDLER)(rastflags) },
+    { "\\nodepth",   ISCONTENTCACHED,  0,NOVALUE, (HANDLER)(rastflags) },
+    { "\\depth",     ISCONTENTCACHED,  1,NOVALUE, (HANDLER)(rastflags) },
     { "\\opaque",    ISOPAQUE,         0,NOVALUE, (HANDLER)(rastflags) },
     { "\\transparent",ISOPAQUE,        1,NOVALUE, (HANDLER)(rastflags) },
     { "\\squash",    ISSMASH,          3,1,       (HANDLER)(rastflags) },
@@ -745,8 +821,22 @@ STATIC	mathchardef symtable[]
     { "\\black",     ISCOLOR,          0,NOVALUE, (HANDLER)(rastflags) },
     { "\\white",     ISCOLOR,          7,NOVALUE, (HANDLER)(rastflags) },
     /* --- accents --- */
-    { "\\vec",	VECACCENT,    1,      0,  (HANDLER)(rastaccent) },
-    { "\\widevec", VECACCENT, 1,      0,  (HANDLER)(rastaccent) },
+    { "\\vec",	VECACCENT,    1,      1,  (HANDLER)(rastaccent) },
+    { "\\widevec", VECACCENT, 1,      1,  (HANDLER)(rastaccent) },
+    { "\\overarrow",      VECACCENT,1,1,  (HANDLER)(rastaccent) },
+    { "\\overrightarrow", VECACCENT,1,1,  (HANDLER)(rastaccent) },
+    { "\\Overrightarrow", VECACCENT,1,11, (HANDLER)(rastaccent) },
+    { "\\underarrow",     VECACCENT,0,1,  (HANDLER)(rastaccent) },
+    { "\\underrightarrow",VECACCENT,0,1,  (HANDLER)(rastaccent) },
+    { "\\Underrightarrow",VECACCENT,0,11, (HANDLER)(rastaccent) },
+    { "\\overleftarrow",  VECACCENT,1,-1, (HANDLER)(rastaccent) },
+    { "\\Overleftarrow",  VECACCENT,1, 9, (HANDLER)(rastaccent) },
+    { "\\underleftarrow", VECACCENT,0,-1, (HANDLER)(rastaccent) },
+    { "\\Underleftarrow", VECACCENT,0, 9, (HANDLER)(rastaccent) },
+    { "\\overleftrightarrow", VECACCENT,1, 0,(HANDLER)(rastaccent) },
+    { "\\Overleftrightarrow", VECACCENT,1,10,(HANDLER)(rastaccent) },
+    { "\\underleftrightarrow",VECACCENT,0, 0,(HANDLER)(rastaccent) },
+    { "\\Underleftrightarrow",VECACCENT,0,10,(HANDLER)(rastaccent) },
     { "\\bar",	BARACCENT,    1,      0,  (HANDLER)(rastaccent) },
     { "\\widebar", BARACCENT, 1,      0,  (HANDLER)(rastaccent) },
     { "\\hat",	HATACCENT,    1,      0,  (HANDLER)(rastaccent) },
@@ -1344,7 +1434,9 @@ STATIC	mathchardef symtable[]
     { "+",		43,	CMR10,   BINARYOP,	NULL },
     { "/",		47,	CMR10,   BINARYOP,	NULL },
     { ":",		58,	CMR10,   ORDINARY,	NULL },
+    { "\\colon",	58,	CMR10,   OPERATOR,	NULL },
     { ";",		59,	CMR10,   ORDINARY,	NULL },
+    { "\\semicolon",	59,	CMR10,   ORDINARY,	NULL },
     { "=",		61,	CMR10,   RELATION,	NULL },
     { "?",		63,	CMR10,   BINARYOP,	NULL },
     { "@",		64,	CMR10,   BINARYOP,	NULL },
@@ -2012,6 +2104,149 @@ STATIC	mathchardef symtable[]
     { "N0",		125,	CYR10,   VARIABLE,	NULL },
     { "<",		60,	CYR10,   VARIABLE,	NULL },
     { ">",		62,	CYR10,   VARIABLE,	NULL },
+
+    /* ------------------- C M M I G R ------------------------
+    Using "Beta code" <http://en.wikipedia.org/wiki/Beta_code>
+    to represent Greek characters in latin, e.g., type a to get
+    \alpha, etc.
+          symbol     charnum    family    class	    function
+    -------------------------------------------------------- */
+    /* --- uppercase greek letters --- */
+    { "G"/*\Gamma*/,	0,	CMMI10GR, VARIABLE,	NULL },
+    { "D"/*\Delta*/,	1,	CMMI10GR, VARIABLE,	NULL },
+    { "Q"/*\Theta*/,	2,	CMMI10GR, VARIABLE,	NULL },
+    { "L"/*\Lambda*/,	3,	CMMI10GR, VARIABLE,	NULL },
+    { "C"/*\Xi*/,	4,	CMMI10GR, VARIABLE,	NULL },
+    { "P"/*\Pi*/,	5,	CMMI10GR, VARIABLE,	NULL },
+    { "S"/*\Sigma*/,	6,	CMMI10GR, VARIABLE,	NULL },
+    { "U"/*\Upsilon*/,	7,	CMMI10GR, VARIABLE,	NULL },
+    { "F"/*\Phi*/,	8,	CMMI10GR, VARIABLE,	NULL },
+    { "Y"/*\Psi*/,	9,	CMMI10GR, VARIABLE,	NULL },
+    { "W"/*\Omega*/,	10,	CMMI10GR, VARIABLE,	NULL },
+    /* --- lowercase greek letters --- */
+    { "a"/*\alpha*/,	11,	CMMI10GR, VARIABLE,	NULL },
+    { "b"/*\beta*/,	12,	CMMI10GR, VARIABLE,	NULL },
+    { "g"/*\gamma*/,	13,	CMMI10GR, VARIABLE,	NULL },
+    { "d"/*\delta*/,	14,	CMMI10GR, VARIABLE,	NULL },
+    { "e"/*\epsilon*/,	15,	CMMI10GR, VARIABLE,	NULL },
+    { "z"/*\zeta*/,	16,	CMMI10GR, VARIABLE,	NULL },
+    { "h"/*\eta*/,	17,	CMMI10GR, VARIABLE,	NULL },
+    { "q"/*\theta*/,	18,	CMMI10GR, VARIABLE,	NULL },
+    { "i"/*\iota*/,	19,	CMMI10GR, VARIABLE,	NULL },
+    { "k"/*\kappa*/,	20,	CMMI10GR, VARIABLE,	NULL },
+    { "l"/*\lambda*/,	21,	CMMI10GR, VARIABLE,	NULL },
+    { "m"/*\mu*/,	22,	CMMI10GR, VARIABLE,	NULL },
+    { "n"/*\nu*/,	23,	CMMI10GR, VARIABLE,	NULL },
+    { "c"/*\xi*/,	24,	CMMI10GR, VARIABLE,	NULL },
+    { "p"/*\pi*/,	25,	CMMI10GR, VARIABLE,	NULL },
+    { "r"/*\rho*/,	26,	CMMI10GR, VARIABLE,	NULL },
+    { "s"/*\sigma*/,	27,	CMMI10GR, VARIABLE,	NULL },
+    { "t"/*\tau*/,	28,	CMMI10GR, VARIABLE,	NULL },
+    { "u"/*\upsilon*/,	29,	CMMI10GR, VARIABLE,	NULL },
+    { "f"/*\phi*/,	30,	CMMI10GR, VARIABLE,	NULL },
+    { "x"/*\chi*/,	31,	CMMI10GR, VARIABLE,	NULL },
+    { "y"/*\psi*/,	32,	CMMI10GR, VARIABLE,	NULL },
+    { "w"/*\omega*/,	33,	CMMI10GR, VARIABLE,	NULL },
+   #if 0
+    { "?"/*\varepsilon*/,34,	CMMI10GR, VARIABLE,	NULL },
+    { "?"/*\vartheta*/,	35,	CMMI10GR, VARIABLE,	NULL },
+    { "?"/*\varpi*/,	36,	CMMI10GR, VARIABLE,	NULL },
+    { "?"/*\varrho*/,	37,	CMMI10GR, VARIABLE,	NULL },
+    { "?"/*\varsigma*/,	38,	CMMI10GR, VARIABLE,	NULL },
+    { "?"/*\varphi*/,	39,	CMMI10GR, VARIABLE,	NULL },
+   #endif
+    /* ------------------- C M M I B G R ----------------------
+    Using "Beta code" <http://en.wikipedia.org/wiki/Beta_code>
+    to represent Greek characters in latin, e.g., type a to get
+    \alpha, etc.
+          symbol     charnum    family    class	    function
+    -------------------------------------------------------- */
+    /* --- uppercase greek letters --- */
+    { "G"/*\Gamma*/,	0,	CMMI10BGR, VARIABLE,	NULL },
+    { "D"/*\Delta*/,	1,	CMMI10BGR, VARIABLE,	NULL },
+    { "Q"/*\Theta*/,	2,	CMMI10BGR, VARIABLE,	NULL },
+    { "L"/*\Lambda*/,	3,	CMMI10BGR, VARIABLE,	NULL },
+    { "C"/*\Xi*/,	4,	CMMI10BGR, VARIABLE,	NULL },
+    { "P"/*\Pi*/,	5,	CMMI10BGR, VARIABLE,	NULL },
+    { "S"/*\Sigma*/,	6,	CMMI10BGR, VARIABLE,	NULL },
+    { "U"/*\Upsilon*/,	7,	CMMI10BGR, VARIABLE,	NULL },
+    { "F"/*\Phi*/,	8,	CMMI10BGR, VARIABLE,	NULL },
+    { "Y"/*\Psi*/,	9,	CMMI10BGR, VARIABLE,	NULL },
+    { "W"/*\Omega*/,	10,	CMMI10BGR, VARIABLE,	NULL },
+    /* --- lowercase greek letters --- */
+    { "a"/*\alpha*/,	11,	CMMI10BGR, VARIABLE,	NULL },
+    { "b"/*\beta*/,	12,	CMMI10BGR, VARIABLE,	NULL },
+    { "g"/*\gamma*/,	13,	CMMI10BGR, VARIABLE,	NULL },
+    { "d"/*\delta*/,	14,	CMMI10BGR, VARIABLE,	NULL },
+    { "e"/*\epsilon*/,	15,	CMMI10BGR, VARIABLE,	NULL },
+    { "z"/*\zeta*/,	16,	CMMI10BGR, VARIABLE,	NULL },
+    { "h"/*\eta*/,	17,	CMMI10BGR, VARIABLE,	NULL },
+    { "q"/*\theta*/,	18,	CMMI10BGR, VARIABLE,	NULL },
+    { "i"/*\iota*/,	19,	CMMI10BGR, VARIABLE,	NULL },
+    { "k"/*\kappa*/,	20,	CMMI10BGR, VARIABLE,	NULL },
+    { "l"/*\lambda*/,	21,	CMMI10BGR, VARIABLE,	NULL },
+    { "m"/*\mu*/,	22,	CMMI10BGR, VARIABLE,	NULL },
+    { "n"/*\nu*/,	23,	CMMI10BGR, VARIABLE,	NULL },
+    { "c"/*\xi*/,	24,	CMMI10BGR, VARIABLE,	NULL },
+    { "p"/*\pi*/,	25,	CMMI10BGR, VARIABLE,	NULL },
+    { "r"/*\rho*/,	26,	CMMI10BGR, VARIABLE,	NULL },
+    { "s"/*\sigma*/,	27,	CMMI10BGR, VARIABLE,	NULL },
+    { "t"/*\tau*/,	28,	CMMI10BGR, VARIABLE,	NULL },
+    { "u"/*\upsilon*/,	29,	CMMI10BGR, VARIABLE,	NULL },
+    { "f"/*\phi*/,	30,	CMMI10BGR, VARIABLE,	NULL },
+    { "x"/*\chi*/,	31,	CMMI10BGR, VARIABLE,	NULL },
+    { "y"/*\psi*/,	32,	CMMI10BGR, VARIABLE,	NULL },
+    { "w"/*\omega*/,	33,	CMMI10BGR, VARIABLE,	NULL },
+   #if 0
+    { "?"/*\varepsilon*/,34,	CMMI10BGR, VARIABLE,	NULL },
+    { "?"/*\vartheta*/,	35,	CMMI10BGR, VARIABLE,	NULL },
+    { "?"/*\varpi*/,	36,	CMMI10BGR, VARIABLE,	NULL },
+    { "?"/*\varrho*/,	37,	CMMI10BGR, VARIABLE,	NULL },
+    { "?"/*\varsigma*/,	38,	CMMI10BGR, VARIABLE,	NULL },
+    { "?"/*\varphi*/,	39,	CMMI10BGR, VARIABLE,	NULL },
+   #endif
+    /* ------------------ B B O L D G R -----------------------
+    Using "Beta code" <http://en.wikipedia.org/wiki/Beta_code>
+    to represent Greek characters in latin, e.g., type a to get
+    \alpha, etc.
+          symbol     charnum    family    class	    function
+    -------------------------------------------------------- */
+    /* --- uppercase greek letters --- */
+    { "G"/*\Gamma*/,	0,	BBOLD10GR, VARIABLE,	NULL },
+    { "D"/*\Delta*/,	1,	BBOLD10GR, VARIABLE,	NULL },
+    { "Q"/*\Theta*/,	2,	BBOLD10GR, VARIABLE,	NULL },
+    { "L"/*\Lambda*/,	3,	BBOLD10GR, VARIABLE,	NULL },
+    { "C"/*\Xi*/,	4,	BBOLD10GR, VARIABLE,	NULL },
+    { "P"/*\Pi*/,	5,	BBOLD10GR, VARIABLE,	NULL },
+    { "S"/*\Sigma*/,	6,	BBOLD10GR, VARIABLE,	NULL },
+    { "U"/*\Upsilon*/,	7,	BBOLD10GR, VARIABLE,	NULL },
+    { "F"/*\Phi*/,	8,	BBOLD10GR, VARIABLE,	NULL },
+    { "Y"/*\Psi*/,	9,	BBOLD10GR, VARIABLE,	NULL },
+    { "W"/*\Omega*/,	10,	BBOLD10GR, VARIABLE,	NULL },
+    /* --- lowercase greek letters --- */
+    { "a"/*\alpha*/,	11,	BBOLD10GR, VARIABLE,	NULL },
+    { "b"/*\beta*/,	12,	BBOLD10GR, VARIABLE,	NULL },
+    { "g"/*\gamma*/,	13,	BBOLD10GR, VARIABLE,	NULL },
+    { "d"/*\delta*/,	14,	BBOLD10GR, VARIABLE,	NULL },
+    { "e"/*\epsilon*/,	15,	BBOLD10GR, VARIABLE,	NULL },
+    { "z"/*\zeta*/,	16,	BBOLD10GR, VARIABLE,	NULL },
+    { "h"/*\eta*/,	17,	BBOLD10GR, VARIABLE,	NULL },
+    { "q"/*\theta*/,	18,	BBOLD10GR, VARIABLE,	NULL },
+    { "i"/*\iota*/,	19,	BBOLD10GR, VARIABLE,	NULL },
+    { "k"/*\kappa*/,	20,	BBOLD10GR, VARIABLE,	NULL },
+    { "l"/*\lambda*/,	21,	BBOLD10GR, VARIABLE,	NULL },
+    { "m"/*\mu*/,	22,	BBOLD10GR, VARIABLE,	NULL },
+    { "n"/*\nu*/,	23,	BBOLD10GR, VARIABLE,	NULL },
+    { "c"/*\xi*/,	24,	BBOLD10GR, VARIABLE,	NULL },
+    { "p"/*\pi*/,	25,	BBOLD10GR, VARIABLE,	NULL },
+    { "r"/*\rho*/,	26,	BBOLD10GR, VARIABLE,	NULL },
+    { "s"/*\sigma*/,	27,	BBOLD10GR, VARIABLE,	NULL },
+    { "t"/*\tau*/,	28,	BBOLD10GR, VARIABLE,	NULL },
+    { "u"/*\upsilon*/,	29,	BBOLD10GR, VARIABLE,	NULL },
+    { "f"/*\phi*/,	30,	BBOLD10GR, VARIABLE,	NULL },
+    { "x"/*\chi*/,	31,	BBOLD10GR, VARIABLE,	NULL },
+    { "y"/*\psi*/,	32,	BBOLD10GR, VARIABLE,	NULL },
+    { "w"/*\omega*/,	127,	BBOLD10GR, VARIABLE,	NULL },
     /* --- trailer record --- */
     { NULL,		-999,	-999,	-999,		NULL }
  }
