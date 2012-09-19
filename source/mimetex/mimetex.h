@@ -43,6 +43,8 @@
  *
  ***************************************************************************/
 
+/*added by Marcus Cuda to get mimetex to compile under windows 11/11/2008*/
+#define strncasecmp _strnicmp
 
 /* --------------------------------------------------------------------------
 check for compilation by parts (not supported yet)

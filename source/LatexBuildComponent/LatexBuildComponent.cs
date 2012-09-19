@@ -116,7 +116,7 @@ namespace LatexBuildComponent
                 }
                 else
                 {
-                    throw new ArgumentException(String.Format("{0} is not a support help file format.", type));
+                    throw new ArgumentException(String.Format("{0} is not a supported help file format.", type));
                 }
                 paths[i] = basePath + path;
             }
