@@ -18,7 +18,10 @@
  */
 
 using System;
-using System.IO;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Xml;
 using System.Xml.XPath;
 using Microsoft.Ddue.Tools;
@@ -33,6 +36,9 @@ namespace LatexBuildComponent
     /// </example>
     public class LatexBuildComponent : BuildComponent
     {
+        private readonly UnicodeEncoding _encoding = new UnicodeEncoding();
+        private readonly SHA256 _hasher = new SHA256CryptoServiceProvider();
+        private readonly IDictionary<byte[], string> _imgNameCache = new Dictionary<byte[], string>(new KeyComparer());
         private readonly string[] _paths;
         private uint _count = 1;
 
@@ -43,10 +49,27 @@ namespace LatexBuildComponent
         /// <param name="configuration">The configuration information</param>
         /// <exception cref="System.Configuration.ConfigurationErrorsException">This is thrown if an error is detected in the
         /// configuration.</exception>
-        public LatexBuildComponent(BuildAssembler assembler, XPathNavigator configuration) : base(assembler, configuration)
+        public LatexBuildComponent(BuildAssembler assembler, XPathNavigator configuration)
+            : base(assembler, configuration)
         {
-
             _paths = GetWorkingDirectories(configuration);
+        }
+
+        /// <summary>
+        /// Returns the image name from the cache if exists, otherwise creates one, places it in the cache
+        /// and returns in.
+        /// </summary>
+        private string GetImageName(string xml)
+        {
+            var hash = _hasher.ComputeHash(_encoding.GetBytes(xml));
+            if (_imgNameCache.ContainsKey(hash))
+            {
+                return _imgNameCache[hash];
+            }
+
+            var filename = "img_" + _count++ + ".gif";
+            _imgNameCache.Add(hash, filename);
+            return filename;
         }
 
         /// <summary>
@@ -61,8 +84,7 @@ namespace LatexBuildComponent
             if (latexList == null) return;
             foreach (XmlNode code in latexList)
             {
-                var filename = "img_" + _count++ + ".gif";
-
+                var filename = GetImageName(code.InnerText);
                 foreach (var path in _paths)
                 {
                     SafeNativeMethods.CreateGifFromEq(code.InnerText, path + filename);
@@ -123,5 +145,26 @@ namespace LatexBuildComponent
 
             return paths;
         }
+
+        #region Nested type: KeyComparer
+
+        private class KeyComparer : IEqualityComparer<byte[]>
+        {
+            #region IEqualityComparer<byte[]> Members
+
+            public bool Equals(byte[] left, byte[] right)
+            {
+                return left.SequenceEqual(right);
+            }
+
+            public int GetHashCode(byte[] key)
+            {
+                return key.Sum(b => b);
+            }
+
+            #endregion
+        }
+
+        #endregion
     }
 }
