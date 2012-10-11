@@ -6,6 +6,7 @@
     public class TestClass
     {
         ///<summary><latex>f(x)=\int_{-\infty}^x e^{-t^2}dt</latex></summary>
+        ///<remarks><latex><![CDATA[f(n) = \begin{cases} n/2, & \mbox{if } n\mbox{ is even} \\ 3n+1, & \mbox{if } n\mbox{ is odd} \end{cases}]]></latex></remarks>
         public TestClass()
         {
             

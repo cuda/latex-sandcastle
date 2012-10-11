@@ -90,7 +90,7 @@ namespace LatexBuildComponent
                     SafeNativeMethods.CreateGifFromEq(code.InnerText, path + filename);
                 }
                 var src = document.CreateAttribute("src");
-                src.Value = filename;
+                src.Value = "../html/" + filename;
                 XmlNode img = document.CreateElement("img");
                 img.Attributes.Append(src);
                 code.ParentNode.ReplaceChild(img, code);
@@ -135,6 +135,10 @@ namespace LatexBuildComponent
                 else if (type.Equals("Website", StringComparison.InvariantCultureIgnoreCase))
                 {
                     path = @"Output\Website\Html\";
+                }
+                else if (type.Equals("MSHelpViewer", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    path = @"Output\MSHelpViewer\Html\";
                 }
                 else
                 {

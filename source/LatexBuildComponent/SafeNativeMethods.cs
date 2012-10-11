@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright 2008 Marcus Cuda - http://cuda.net
+ * Copyright 2008 Marcus Cuda - http://marcuscuda.com
  *
  *  This file is part of LaTeX Build Component.
  *
