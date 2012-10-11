@@ -1,10 +1,10 @@
 Notes: 
 1) This component uses mimeTeX 1.7.4 (http://www.forkosh.com/mimetex.html) to parse
    LaTeX code.
-2) This component only supports HTML Help 1.x and Website output.
+2) This component does NOT support MS Help 2.
 
 Requirements:
- Sandcastle Help File Builder v1.9.4
+ Sandcastle Help File Builder v1.9.5
 
 Instructions
 From the zip file:
