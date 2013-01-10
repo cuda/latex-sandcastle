@@ -4,7 +4,7 @@ Notes:
 2) This component does NOT support MS Help 2.
 
 Requirements:
- Sandcastle Help File Builder v1.9.5
+ Sandcastle Help File Builder v1.9.6
 
 Instructions
 From the zip file:

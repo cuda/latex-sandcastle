@@ -27,8 +27,8 @@
     <WorkingPath />
     <CleanIntermediates>False</CleanIntermediates>
     <BuildLogFile />
-    <FrameworkVersion>.NET Framework 4.0</FrameworkVersion>
-    <PresentationStyle>Prototype</PresentationStyle>
+    <FrameworkVersion>.NET Framework 4.5</FrameworkVersion>
+    <PresentationStyle>VS2010</PresentationStyle>
     <ComponentConfigurations>
       <ComponentConfig id="LaTeX Buld Component" enabled="True">
         <component id="LaTeX Buld Component" type="LatexBuildComponent.LatexBuildComponent" assembly="{@ComponentsFolder}\LatexBuildComponent.dll">
@@ -43,6 +43,18 @@
       <DocumentationSource sourceFile="bin\Release\TestProject.xml" />
     </DocumentationSources>
     <HelpFileFormat>HtmlHelp1, MSHelpViewer, Website</HelpFileFormat>
+    <BuildAssemblerVerbosity>OnlyWarningsAndErrors</BuildAssemblerVerbosity>
+    <IndentHtml>False</IndentHtml>
+    <KeepLogFile>True</KeepLogFile>
+    <DisableCodeBlockComponent>False</DisableCodeBlockComponent>
+    <CppCommentsFixup>False</CppCommentsFixup>
+    <SyntaxFilters>Standard</SyntaxFilters>
+    <SdkLinkTarget>Blank</SdkLinkTarget>
+    <RootNamespaceContainer>False</RootNamespaceContainer>
+    <Preliminary>False</Preliminary>
+    <NamingMethod>Guid</NamingMethod>
+    <HelpTitle>A Sandcastle Documented Class Library</HelpTitle>
+    <ContentPlacement>AboveNamespaces</ContentPlacement>
   </PropertyGroup>
   <!-- There are no properties for these groups.  AnyCPU needs to appear in
        order for Visual Studio to perform the build.  The others are optional

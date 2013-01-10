@@ -59,17 +59,18 @@ namespace LatexBuildComponent
         /// Returns the image name from the cache if exists, otherwise creates one, places it in the cache
         /// and returns in.
         /// </summary>
-        private string GetImageName(string xml)
+        private Tuple<bool,string> GetImageName(string xml)
         {
             var hash = _hasher.ComputeHash(_encoding.GetBytes(xml));
+
             if (_imgNameCache.ContainsKey(hash))
             {
-                return _imgNameCache[hash];
+                return new Tuple<bool, string>(true,_imgNameCache[hash]);
             }
 
             var filename = "img_" + _count++ + ".gif";
             _imgNameCache.Add(hash, filename);
-            return filename;
+            return new Tuple<bool, string>(false, filename);
         }
 
         /// <summary>
@@ -84,11 +85,21 @@ namespace LatexBuildComponent
             if (latexList == null) return;
             foreach (XmlNode code in latexList)
             {
-                var filename = GetImageName(code.InnerText);
-                foreach (var path in _paths)
+                var attr = code.Attributes.GetNamedItem("expr");
+                var expression = attr == null ? code.InnerText : attr.InnerText;
+                if (String.IsNullOrWhiteSpace(expression)) continue;
+                var result = GetImageName(expression);
+                var filename = result.Item2;
+
+                if (!result.Item1)
                 {
-                    SafeNativeMethods.CreateGifFromEq(code.InnerText, path + filename);
+                    foreach (var path in _paths)
+                    {
+                        //copy instead of running foreach path?
+                        SafeNativeMethods.CreateGifFromEq(expression, path + filename);
+                    }
                 }
+
                 var src = document.CreateAttribute("src");
                 src.Value = "../html/" + filename;
                 XmlNode img = document.CreateElement("img");

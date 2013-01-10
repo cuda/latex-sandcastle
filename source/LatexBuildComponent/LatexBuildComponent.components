@@ -3,7 +3,6 @@
   <component id="LaTeX Buld Component"  type="LatexBuildComponent.LatexBuildComponent"  assembly="{@ComponentsFolder}\LatexBuildComponent.dll">
     <description>Converts LaTeX code into images.</description>
     <dependencies>
-      <component id="Post-transform Component" />
     </dependencies>
     <insert placement="before" type="Microsoft.Ddue.Tools.TransformComponent" />
     <insertConceptual placement="before" type="Microsoft.Ddue.Tools.TransformComponent" />
