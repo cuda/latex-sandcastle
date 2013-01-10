@@ -11,8 +11,8 @@
         {
             
         }
-        ///<summary>x2-><latex exddpr="x^2"/>
-        /// <para>dup:<latex expr="x^2"/></para></summary>
+        ///<summary>x2-><latex expr="x^2"/>
+        /// <para>dup-><latex expr="x^2"/></para></summary>
         /// <remarks>This a test:<latex expr="\frac{\partial^2\phi}{\partial x^2} \sum\limits_{n=0}^\infty\frac{x^n}{n!}"/></remarks>
         public void Test()
         {

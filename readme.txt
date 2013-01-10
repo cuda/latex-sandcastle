@@ -17,6 +17,10 @@ From the zip file:
 4. Add <latex> tags to your XML comments.  The <latex> tag must be placed inside regular XML comment tags.
    Example: ///<summary><latex>f(x)=x^2</latex></summary>
    For complex LaTeX code, it should be placed in a CDATA tag, i.e. <latex><!CDATA[f(x)=x^2]]></latex>
+   The LaTeX code can be inside the latex tag, or in an "expr" attribute of the latex tag.
+   Example: ///<summary><latex expr="f(x)=x^2"/></summary>
+   If code is in both the expr attribute and the tag body, the code in the attribute is used and the body code
+   is discarded.
 5. Run SHFB as usual.   
 
 From Source:
@@ -30,5 +34,9 @@ From Source:
 5. Add <latex> tags to your XML comments.  The <latex> tag must be placed inside regular XML comment tags.
    Example: ///<summary><latex>f(x)=x^2</latex></summary>
    For complex LaTeX code, it should be placed in a CDATA tag, i.e. <latex><!CDATA[f(x)=x^2]]></latex>
+   The LaTeX code can be inside the latex tag, or in an "expr" attribute of the latex tag.
+   Example: ///<summary><latex expr="f(x)=x^2"/></summary>
+   If code is in both the expr attribute and the tag body, the code in the attribute is used and the body code
+   is discarded.
 6. Run SHFB as usual.
 
