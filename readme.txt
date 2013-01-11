@@ -3,7 +3,7 @@ Requirements:
 
 Pre-built binaries:
 x86 - http://files.marcuscuda.com/latex_shfb_v_1_3_x86.zip
-x63 - http://files.marcuscuda.com/latex_shfb_v_1_3_x64.zip
+x64 - http://files.marcuscuda.com/latex_shfb_v_1_3_x64.zip
 
 Instructions
 From a zip file:
