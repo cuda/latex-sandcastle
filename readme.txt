@@ -32,12 +32,12 @@ From Source:
 Follow steps 3-5 above.
 
 Notes: 
-1) This component uses mimeTeX 1.7.4 (http://www.forkosh.com/mimetex.html) to parse
+1. This component uses mimeTeX 1.7.4 (http://www.forkosh.com/mimetex.html) to parse
    LaTeX code.
-2) This component does NOT support MS Help 2.
-3) mimeTeX uses "large" for the default font size (see the mimeTeX quickstart guide). You can 
+2. This component does NOT support MS Help 2.
+3. mimeTeX uses "large" for the default font size (see the mimeTeX quickstart guide). You can 
    change the default font size in the build component's configuration.
    Do do so:
-   1. In SHFB, select Components and then highlight "LaTeX BuildComponent" in "Build Components in This Project"
-   2. Click Configure
-   3. Set the new default font size and click OK.
+   1) In SHFB, select Components and then highlight "LaTeX BuildComponent" in "Build Components in This Project"
+   2) Click Configure
+   3) Set the new default font size and click OK.
