@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LatexBuildComponent", "LatexBuildComponent\LatexBuildComponent.csproj", "{88962EE1-C58F-4A69-A9CD-A8313B238F92}"
 	ProjectSection(ProjectDependencies) = postProject
 		{3712E77E-1176-4F47-8B32-C731FAAE8646} = {3712E77E-1176-4F47-8B32-C731FAAE8646}
@@ -23,9 +23,11 @@ Global
 		{3712E77E-1176-4F47-8B32-C731FAAE8646}.Release|x64.ActiveCfg = Release|x64
 		{3712E77E-1176-4F47-8B32-C731FAAE8646}.Release|x64.Build.0 = Release|x64
 		{3712E77E-1176-4F47-8B32-C731FAAE8646}.Release|x86.ActiveCfg = Release|Win32
+		{3712E77E-1176-4F47-8B32-C731FAAE8646}.Release|x86.Build.0 = Release|Win32
 		{825754D3-CDA1-4E2C-82DD-ED591D9BE186}.Release|x64.ActiveCfg = Release|x64
 		{825754D3-CDA1-4E2C-82DD-ED591D9BE186}.Release|x64.Build.0 = Release|x64
 		{825754D3-CDA1-4E2C-82DD-ED591D9BE186}.Release|x86.ActiveCfg = Release|Any CPU
+		{825754D3-CDA1-4E2C-82DD-ED591D9BE186}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

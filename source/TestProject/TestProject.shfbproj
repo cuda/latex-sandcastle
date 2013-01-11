@@ -32,10 +32,11 @@
     <ComponentConfigurations>
       <ComponentConfig id="LaTeX Buld Component" enabled="True">
         <component id="LaTeX Buld Component" type="LatexBuildComponent.LatexBuildComponent" assembly="{@ComponentsFolder}\LatexBuildComponent.dll">
-          <helpType value="{@HelpFileFormat}" />
-          <basePath value="{@WorkingFolder}" />
-          <languageFilter value="false" />
-        </component>
+  <helpType value="{@HelpFileFormat}" />
+  <basePath value="{@WorkingFolder}" />
+  <languageFilter value="false" />
+  <fontSize value="1" />
+</component>
       </ComponentConfig>
     </ComponentConfigurations>
     <DocumentationSources>

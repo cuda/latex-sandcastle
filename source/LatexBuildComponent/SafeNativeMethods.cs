@@ -24,6 +24,6 @@ namespace LatexBuildComponent
     public static class SafeNativeMethods
     {
         [DllImport("mimetex.dll", CharSet = CharSet.Ansi, ExactSpelling = true, SetLastError = false)] 
-        public static extern void CreateGifFromEq([MarshalAs(UnmanagedType.LPStr)] string expression, [MarshalAs(UnmanagedType.LPStr)] string gifFileName);
+        public static extern void CreateGifFromEq([MarshalAs(UnmanagedType.LPStr)] string expression, [MarshalAs(UnmanagedType.LPStr)] string gifFileName, [MarshalAs(UnmanagedType.LPStr)] string defaultSize);
     }
 }

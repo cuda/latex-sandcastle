@@ -16312,25 +16312,27 @@ end_of_job:
  *		  http://www.shitalshah.com/dev/eq2img_all.zip
  * ======================================================================= */
 /* --- include function to expose Win32 DLL to outside world --- */
+// Added support to change the default font size -- Marcus Cuda Jan 2013
 #if defined(_USRDLL)
   extern _declspec(dllexport)int _cdecl
-	CreateGifFromEq ( char *expression, char *gifFileName );
+	CreateGifFromEq ( char *expression, char *gifFileName, char* defaultSize );
 #endif
 /* --- entry point --- */
-int	CreateGifFromEq ( char *expression, char *gifFileName )
+int	CreateGifFromEq ( char *expression, char *gifFileName, char* defaultSize )
 {
 /* -------------------------------------------------------------------------
 Allocations and Declarations
 -------------------------------------------------------------------------- */
 int	main();			/* main() akways returns an int */
 /* --- set constants --- */
-int	argc = 4;		/* count of args supplied to main() */
-char	*argv[5] =		/* command line args to run with -e option */
-	  { "MimeTeXWin32DLL", "-e", /* constant args */
+int	argc = 6;		/* count of args supplied to main() */
+char	*argv[7] =		/* command line args to run with -e option */
+	  { "MimeTeXWin32DLL", "-s", NULL, "-e", /* constant args */
 	    /*gifFileName, expression,*/ NULL, NULL, NULL };
 /* --- set argv[]'s not computable at load time --- */
-argv[2] = gifFileName;		/* args are -e gifFileName */
-argv[3] = expression;		/* and now  -e gifFileName expression */
+argv[2] = defaultSize;
+argv[4] = gifFileName;		/* args are -e gifFileName */
+argv[5] = expression;		/* and now  -e gifFileName expression */
 /* -------------------------------------------------------------------------
 Run mimeTeX in command-line mode with -e (export) option, and then return
 -------------------------------------------------------------------------- */

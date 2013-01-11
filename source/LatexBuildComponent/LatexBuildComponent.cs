@@ -22,8 +22,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Windows.Forms;
 using System.Xml;
 using System.Xml.XPath;
+using System.Xml.Linq;
 using Microsoft.Ddue.Tools;
 
 namespace LatexBuildComponent
@@ -41,6 +43,7 @@ namespace LatexBuildComponent
         private readonly IDictionary<byte[], string> _imgNameCache = new Dictionary<byte[], string>(new KeyComparer());
         private readonly string[] _paths;
         private uint _count = 1;
+        private static string _fontSize = "3";
 
         /// <summary>
         /// Constructor
@@ -52,6 +55,11 @@ namespace LatexBuildComponent
         public LatexBuildComponent(BuildAssembler assembler, XPathNavigator configuration)
             : base(assembler, configuration)
         {
+            var nav = configuration.SelectSingleNode("fontSize");
+            if (nav != null)
+            {
+                _fontSize = nav.GetAttribute("value", String.Empty);
+            }
             _paths = GetWorkingDirectories(configuration);
         }
 
@@ -90,13 +98,12 @@ namespace LatexBuildComponent
                 if (String.IsNullOrWhiteSpace(expression)) continue;
                 var result = GetImageName(expression);
                 var filename = result.Item2;
-
                 if (!result.Item1)
                 {
                     foreach (var path in _paths)
                     {
-                        //copy instead of running foreach path?
-                        SafeNativeMethods.CreateGifFromEq(expression, path + filename);
+                        //TODO: copy instead of running foreach path
+                        SafeNativeMethods.CreateGifFromEq(expression, path + filename, _fontSize);
                     }
                 }
 
@@ -159,6 +166,30 @@ namespace LatexBuildComponent
             }
 
             return paths;
+        }
+
+        /// <summary>
+        /// Configures the component. 
+        /// </summary>
+        /// <param name="configXml">The current configuration.</param>
+        /// <returns>The updated configuration.</returns>
+        public static string ConfigureComponent(string configXml)
+        {
+            // Open the dialog to edit the configuration
+            using (var dlg = new LatexConfigDlg(configXml))
+            {
+                // Get the modified configuration if OK was clicked
+                if (dlg.ShowDialog() == DialogResult.OK)
+                {
+                    _fontSize = dlg.FontSize;
+                }
+                var config = XElement.Parse(configXml);
+                config.Element("fontSize").Attribute("value").SetValue(_fontSize);
+                configXml = config.ToString();
+            }
+
+            // Return the configuration data
+            return configXml;
         }
 
         #region Nested type: KeyComparer

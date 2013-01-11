@@ -6,11 +6,12 @@
     </dependencies>
     <insert placement="before" type="Microsoft.Ddue.Tools.TransformComponent" />
     <insertConceptual placement="before" type="Microsoft.Ddue.Tools.TransformComponent" />
-    <configureMethod name="-" />
+    <configureMethod name="ConfigureComponent" />
     <defaultConfiguration>
       <helpType value="{@HelpFileFormat}" />
       <basePath value="{@WorkingFolder}" />
       <languageFilter value="false" />
+      <fontSize value="3" />
     </defaultConfiguration>
   </component>
 </components>
