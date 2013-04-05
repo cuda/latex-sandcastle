@@ -1,3 +1,5 @@
+# This project has been retired and no longer supported
+
 Requirements:
  Sandcastle Help File Builder v1.9.6
 
