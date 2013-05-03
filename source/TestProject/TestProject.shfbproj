@@ -35,7 +35,7 @@
   <helpType value="{@HelpFileFormat}" />
   <basePath value="{@WorkingFolder}" />
   <languageFilter value="false" />
-  <fontSize value="1" />
+  <fontSize value="3" />
 </component>
       </ComponentConfig>
     </ComponentConfigurations>
